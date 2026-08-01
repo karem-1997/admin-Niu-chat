@@ -134,6 +134,9 @@ body::before {
                 <button onclick="showSection('manager-archive')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all">
                     <i class="fas fa-archive ml-1"></i>أرشيف الترحيبات
                 </button>
+                <button onclick="showSection('manager-archive')" class="px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-sm transition-all relative">
+                    <i class="fas fa-archive ml-1"></i>الأرشيف
+                </button>
                 <button onclick="showSection('manager-clear')" class="px-3 py-2 rounded-lg bg-red-900/40 text-red-400 hover:bg-red-900/60 text-sm transition-all border border-red-500/30">
                     <i class="fas fa-trash-alt ml-1"></i>مسح البيانات
                 </button>
@@ -311,16 +314,62 @@ body::before {
 
         <!-- Archive Section -->
         <div id="manager-archive" class="manager-section hidden">
-            <div class="glass rounded-2xl p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold flex items-center gap-2">
-                        <i class="fas fa-archive text-amber-400"></i>أرشيف الترحيبات
-                    </h3>
-                    <button onclick="clearArchive()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
-                        <i class="fas fa-trash ml-1"></i>مسح الأرشيف
-                    </button>
+            <!-- Archive Tabs -->
+            <div class="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl">
+                <button onclick="showArchiveTab('archive-reports')" id="tab-archive-reports" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white">
+                    <i class="fas fa-clipboard-list ml-2"></i>أرشيف البلاغات
+                </button>
+                <button onclick="showArchiveTab('archive-idchanges')" id="tab-archive-idchanges" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                    <i class="fas fa-id-card ml-2"></i>أرشيف تغيير ID
+                </button>
+                <button onclick="showArchiveTab('archive-welcomes')" id="tab-archive-welcomes" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                    <i class="fas fa-lightbulb ml-2"></i>أرشيف الترحيبات
+                </button>
+            </div>
+
+            <!-- Archive Reports -->
+            <div id="archive-reports" class="archive-tab">
+                <div class="glass rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold flex items-center gap-2">
+                            <i class="fas fa-clipboard-check text-green-400"></i>أرشيف البلاغات المحلولة
+                        </h3>
+                        <button onclick="clearArchiveReports()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
+                            <i class="fas fa-trash ml-1"></i>مسح الأرشيف
+                        </button>
+                    </div>
+                    <div id="archiveReportsList" class="space-y-3"></div>
                 </div>
-                <div id="archiveList" class="space-y-3"></div>
+            </div>
+
+            <!-- Archive ID Changes -->
+            <div id="archive-idchanges" class="archive-tab hidden">
+                <div class="glass rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold flex items-center gap-2">
+                            <i class="fas fa-check-circle text-green-400"></i>أرشيف تغيير ID المنجزة
+                        </h3>
+                        <button onclick="clearArchiveIdChanges()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
+                            <i class="fas fa-trash ml-1"></i>مسح الأرشيف
+                        </button>
+                    </div>
+                    <div id="archiveIdChangesList" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Archive Welcomes -->
+            <div id="archive-welcomes" class="archive-tab hidden">
+                <div class="glass rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold flex items-center gap-2">
+                            <i class="fas fa-archive text-amber-400"></i>أرشيف الترحيبات
+                        </h3>
+                        <button onclick="clearArchiveWelcomes()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
+                            <i class="fas fa-trash ml-1"></i>مسح الأرشيف
+                        </button>
+                    </div>
+                    <div id="archiveWelcomesList" class="space-y-3"></div>
+                </div>
             </div>
         </div>
 
@@ -695,7 +744,9 @@ function showManagerDashboard() {
     loadProblems();
     loadIdChanges();
     loadWelcomes();
-    loadArchive();
+    loadArchiveReports();
+    loadArchiveIdChanges();
+    loadArchiveWelcomes();
     loadTelegramSettings();
     checkPendingReports();
     checkPendingIdChanges();
@@ -889,7 +940,9 @@ function loadProblems() {
     db.ref('reports').on('value', snap => {
         const reports = snap.val() || {};
         const container = document.getElementById('problemsList');
-        const list = Object.entries(reports).filter(([k, r]) => r.type !== 'welcome').sort((a, b) => b[1].timestamp - a[1].timestamp);
+        const list = Object.entries(reports)
+            .filter(([k, r]) => r.type !== 'welcome' && r.status !== 'solved')
+            .sort((a, b) => b[1].timestamp - a[1].timestamp);
 
         if (list.length === 0) {
             container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد بلاغات</p>';
@@ -938,8 +991,19 @@ function loadProblems() {
 }
 
 function solveProblem(key) {
-    db.ref('reports/' + key).update({ status: 'solved', solvedAt: Date.now() }).then(() => {
-        showToast('تم تحديث الحالة إلى: تم الحل');
+    db.ref('reports/' + key).once('value').then(snap => {
+        const report = snap.val();
+        if (!report) return;
+        const archiveKey = db.ref('archive/reports').push().key;
+        db.ref('archive/reports/' + archiveKey).set({
+            ...report,
+            status: 'solved',
+            solvedAt: Date.now()
+        }).then(() => {
+            db.ref('reports/' + key).remove().then(() => {
+                showToast('✅ تم الحل وأرشفة البلاغ');
+            });
+        });
     });
 }
 
@@ -948,7 +1012,9 @@ function loadIdChanges() {
     db.ref('idChanges').on('value', snap => {
         const items = snap.val() || {};
         const container = document.getElementById('idChangesList');
-        const list = Object.entries(items).sort((a, b) => b[1].timestamp - a[1].timestamp);
+        const list = Object.entries(items)
+            .filter(([k, i]) => i.status === 'pending')
+            .sort((a, b) => b[1].timestamp - a[1].timestamp);
 
         if (list.length === 0) {
             container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد طلبات تغيير ID</p>';
@@ -1038,8 +1104,19 @@ function loadIdChanges() {
 }
 
 function approveIdChange(key) {
-    db.ref('idChanges/' + key).update({ status: 'done', doneAt: Date.now() }).then(() => {
-        showToast('تم تحديث الحالة إلى: تم العمل');
+    db.ref('idChanges/' + key).once('value').then(snap => {
+        const item = snap.val();
+        if (!item) return;
+        const archiveKey = db.ref('archive/idChanges').push().key;
+        db.ref('archive/idChanges/' + archiveKey).set({
+            ...item,
+            status: 'done',
+            doneAt: Date.now()
+        }).then(() => {
+            db.ref('idChanges/' + key).remove().then(() => {
+                showToast('✅ تم العمل وأرشفة الطلب');
+            });
+        });
     });
 }
 
@@ -1174,14 +1251,148 @@ function markWelcomesDone() {
 }
 
 // Archive Functions
-function loadArchive() {
+function showArchiveTab(tabId) {
+    document.querySelectorAll('.archive-tab').forEach(el => el.classList.add('hidden'));
+    document.getElementById(tabId).classList.remove('hidden');
+    document.querySelectorAll('[id^="tab-archive-"]').forEach(btn => {
+        btn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
+    });
+    const activeBtn = document.getElementById('tab-' + tabId);
+    if (activeBtn) activeBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white';
+}
+
+function loadArchiveReports() {
+    db.ref('archive/reports').on('value', snap => {
+        const archive = snap.val() || {};
+        const container = document.getElementById('archiveReportsList');
+        const list = Object.entries(archive).sort((a, b) => (b[1].solvedAt || b[1].timestamp) - (a[1].solvedAt || a[1].timestamp));
+
+        if (list.length === 0) {
+            container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف البلاغات فارغ</p>';
+            return;
+        }
+        container.innerHTML = list.map(([key, rep]) => `
+            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-2 py-1 rounded-md text-xs font-bold status-solved">تم الحل</span>
+                            <span class="text-xs text-slate-400">من: ${rep.adminName || 'أدمن'}</span>
+                            <span class="text-xs text-slate-500">${new Date(rep.solvedAt || rep.timestamp).toLocaleString('ar-EG')}</span>
+                        </div>
+                        <p class="text-white font-medium mb-2">${rep.item || rep.content || 'بلاغ'}</p>
+                        ${rep.reportedId ? `
+                            <div class="bg-slate-800/50 rounded-lg p-2 flex items-center justify-between mb-2">
+                                <div>
+                                    <p class="text-xs text-slate-500">ID اللي عليه الشكوة</p>
+                                    <p class="text-white font-mono text-sm">${rep.reportedId}</p>
+                                </div>
+                                <button onclick="copyText('${rep.reportedId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                        ${rep.description ? `<p class="text-sm text-slate-400 bg-slate-800/50 rounded-lg p-2 mt-2"><i class="fas fa-align-left ml-1 text-yellow-500"></i>${rep.description}</p>` : ''}
+                        ${rep.note ? `<p class="text-sm text-slate-500 mt-1"><i class="fas fa-sticky-note ml-1"></i>${rep.note}</p>` : ''}
+                    </div>
+                    <button onclick="deleteArchiveReport('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    });
+}
+
+function loadArchiveIdChanges() {
+    db.ref('archive/idChanges').on('value', snap => {
+        const archive = snap.val() || {};
+        const container = document.getElementById('archiveIdChangesList');
+        const list = Object.entries(archive).sort((a, b) => (b[1].doneAt || b[1].timestamp) - (a[1].doneAt || a[1].timestamp));
+
+        if (list.length === 0) {
+            container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف تغيير ID فارغ</p>';
+            return;
+        }
+        container.innerHTML = list.map(([key, item]) => `
+            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 rounded-md text-xs font-bold status-solved">تم العمل</span>
+                            <span class="text-xs text-slate-400">من: ${item.adminName || 'أدمن'}</span>
+                            <span class="text-xs text-slate-500">${new Date(item.doneAt || item.timestamp).toLocaleString('ar-EG')}</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                            <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-slate-500 mb-1">الـ ID القديم</p>
+                                    <p class="text-white font-mono text-sm">${item.oldId}</p>
+                                </div>
+                                <button onclick="copyText('${item.oldId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-slate-500 mb-1">الـ ID المطلوب</p>
+                                    <p class="text-white font-mono text-sm">${item.newId}</p>
+                                </div>
+                                <button onclick="copyText('${item.newId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        ${item.shipmentOwnerId || item.shipmentMonth ? `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2 mt-2">
+                            ${item.shipmentOwnerId ? `
+                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
+                                    <div>
+                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-box ml-1"></i>ID صاحب الشحنة</p>
+                                        <p class="text-white font-mono text-sm">${item.shipmentOwnerId}</p>
+                                    </div>
+                                    <button onclick="copyText('${item.shipmentOwnerId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            ` : ''}
+                            ${item.shipmentMonth ? `
+                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
+                                    <div>
+                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-calendar ml-1"></i>الشهر</p>
+                                        <p class="text-white font-mono text-sm">${item.shipmentMonth}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${item.shipmentAmount ? `
+                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
+                                    <div>
+                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-dollar-sign ml-1"></i>قيمة الشحنة</p>
+                                        <p class="text-white font-mono text-sm">${item.shipmentAmount}$</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ` : ''}
+                        ${item.note ? `<p class="text-sm text-slate-400 bg-slate-800/50 rounded-lg p-2 mt-2"><i class="fas fa-sticky-note ml-1 text-red-500"></i>${item.note}</p>` : ''}
+                    </div>
+                    <button onclick="deleteArchiveIdChange('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    });
+}
+
+function loadArchiveWelcomes() {
     db.ref('archive/welcomes').on('value', snap => {
         const archive = snap.val() || {};
-        const container = document.getElementById('archiveList');
+        const container = document.getElementById('archiveWelcomesList');
         const list = Object.entries(archive).sort((a, b) => b[1].archivedAt - a[1].archivedAt);
 
         if (list.length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center py-8">الأرشيف فارغ</p>';
+            container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف الترحيبات فارغ</p>';
             return;
         }
         container.innerHTML = list.map(([key, w]) => `
@@ -1208,7 +1419,7 @@ function loadArchive() {
                             أرشف: ${new Date(w.archivedAt).toLocaleString('ar-EG')}
                         </p>
                     </div>
-                    <button onclick="deleteArchiveItem('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
+                    <button onclick="deleteArchiveWelcome('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -1217,14 +1428,34 @@ function loadArchive() {
     });
 }
 
-function deleteArchiveItem(key) {
-    if (!confirm('هل أنت متأكد من حذف هذا العنصر من الأرشيف؟')) return;
+function deleteArchiveReport(key) {
+    if (!confirm('هل أنت متأكد من حذف هذا البلاغ من الأرشيف؟')) return;
+    db.ref('archive/reports/' + key).remove().then(() => showToast('تم الحذف من الأرشيف'));
+}
+
+function deleteArchiveIdChange(key) {
+    if (!confirm('هل أنت متأكد من حذف هذا الطلب من الأرشيف؟')) return;
+    db.ref('archive/idChanges/' + key).remove().then(() => showToast('تم الحذف من الأرشيف'));
+}
+
+function deleteArchiveWelcome(key) {
+    if (!confirm('هل أنت متأكد من حذف هذه الأيدية من الأرشيف؟')) return;
     db.ref('archive/welcomes/' + key).remove().then(() => showToast('تم الحذف من الأرشيف'));
 }
 
-function clearArchive() {
-    if (!confirm('هل أنت متأكد من مسح كامل أرشيف الترحيبات؟ لا يمكن التراجع!')) return;
-    db.ref('archive/welcomes').remove().then(() => showToast('تم مسح الأرشيف بالكامل'));
+function clearArchiveReports() {
+    if (!confirm('هل أنت متأكد من مسح أرشيف البلاغات بالكامل؟ لا يمكن التراجع!')) return;
+    db.ref('archive/reports').remove().then(() => showToast('تم مسح أرشيف البلاغات'));
+}
+
+function clearArchiveIdChanges() {
+    if (!confirm('هل أنت متأكد من مسح أرشيف تغيير ID بالكامل؟ لا يمكن التراجع!')) return;
+    db.ref('archive/idChanges').remove().then(() => showToast('تم مسح أرشيف تغيير ID'));
+}
+
+function clearArchiveWelcomes() {
+    if (!confirm('هل أنت متأكد من مسح أرشيف الترحيبات بالكامل؟ لا يمكن التراجع!')) return;
+    db.ref('archive/welcomes').remove().then(() => showToast('تم مسح أرشيف الترحيبات'));
 }
 
 function copyText(text) {
@@ -1573,7 +1804,9 @@ function clearAllData() {
     deletes.push(db.ref('reports').remove());
     deletes.push(db.ref('idChanges').remove());
     deletes.push(db.ref('welcomes').remove());
-    deletes.push(db.ref('archive').remove());
+    deletes.push(db.ref('archive/reports').remove());
+    deletes.push(db.ref('archive/idChanges').remove());
+    deletes.push(db.ref('archive/welcomes').remove());
 
     Promise.all(deletes).then(() => {
         showToast('✅ تم مسح جميع البيانات بنجاح!');
@@ -1585,7 +1818,9 @@ function clearAllData() {
         loadProblems();
         loadIdChanges();
         loadWelcomes();
-        loadArchive();
+        loadArchiveReports();
+        loadArchiveIdChanges();
+        loadArchiveWelcomes();
     }).catch(err => {
         showToast('❌ حدث خطأ أثناء المسح: ' + err.message);
     });
