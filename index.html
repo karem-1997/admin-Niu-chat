@@ -137,6 +137,9 @@ body::before {
                 <button onclick="showSection('manager-clear')" class="px-3 py-2 rounded-lg bg-red-900/40 text-red-400 hover:bg-red-900/60 text-sm transition-all border border-red-500/30">
                     <i class="fas fa-trash-alt ml-1"></i>مسح البيانات
                 </button>
+                <button onclick="showSection('manager-telegram')" class="px-3 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-sm transition-all border border-blue-500/30">
+                    <i class="fab fa-telegram ml-1"></i>إعدادات التلجرام
+                </button>
                 <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
                     <i class="fas fa-sign-out-alt ml-1"></i>خروج
                 </button>
@@ -318,6 +321,58 @@ body::before {
                     </button>
                 </div>
                 <div id="archiveList" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- Telegram Settings Section -->
+        <div id="manager-telegram" class="manager-section hidden">
+            <div class="glass rounded-2xl p-8 border-2 border-blue-500/30">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                        <i class="fab fa-telegram text-blue-400 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-blue-400 mb-2">إعدادات إشعارات Telegram</h3>
+                    <p class="text-slate-400">ربط بوت Telegram لاستقبال إشعارات فورية عند أي نشاط من الأدمن</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-2">Bot Token <span class="text-red-400">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-key absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input type="text" id="telegramBotToken" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl pr-10 pl-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono text-sm" placeholder="مثال: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">التوكن اللي بيجيلك من @BotFather</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-2">Chat ID <span class="text-red-400">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-hashtag absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input type="text" id="telegramChatId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl pr-10 pl-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono text-sm" placeholder="مثال: 123456789 أو -1001234567890">
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">الـ ID بتاعك أو ID الجروب/القناة</p>
+                    </div>
+                </div>
+
+                <div class="bg-blue-950/30 rounded-xl p-6 mb-6 border border-blue-500/20">
+                    <h4 class="font-bold text-blue-300 mb-3 flex items-center gap-2">
+                        <i class="fas fa-bell"></i>الإشعارات اللي هتوصل:
+                    </h4>
+                    <ul class="space-y-2 text-sm text-slate-300">
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>إرسال بلاغ جديد من أي أدمن</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>إرسال أيدية ترحيب جديدة</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>طلب تغيير ID جديد</li>
+                    </ul>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="saveTelegramSettings()" class="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25">
+                        <i class="fas fa-save ml-2"></i>حفظ الإعدادات
+                    </button>
+                    <button onclick="testTelegramConnection()" class="px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 transition-all shadow-lg shadow-green-500/25">
+                        <i class="fas fa-paper-plane ml-2"></i>اختبار الإرسال
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -641,6 +696,7 @@ function showManagerDashboard() {
     loadIdChanges();
     loadWelcomes();
     loadArchive();
+    loadTelegramSettings();
     checkPendingReports();
     checkPendingIdChanges();
     checkPendingWelcomes();
@@ -1284,6 +1340,7 @@ function submitReport() {
     }
     Promise.all(promises).then(() => {
         showToast('تم إرسال البلاغ بنجاح');
+        notifyNewReport(currentUser.name, selectedSectionData.name, checkedItems, reportedId);
         document.getElementById('customReport').value = '';
         document.getElementById('reportedId').value = '';
         document.querySelectorAll('input[name="sectionItem"]:checked').forEach(cb => cb.checked = false);
@@ -1335,6 +1392,7 @@ function submitWelcome() {
         timestamp: Date.now()
     }).then(() => {
         showToast('تم إرسال أيديهات الترحيب بنجاح');
+        notifyNewWelcome(currentUser.name, ids);
         // Reset ID fields to one empty
         document.getElementById('welcomeIdFields').innerHTML = `
             <div class="id-input-group flex gap-2 items-center">
@@ -1391,6 +1449,7 @@ function submitIdChange() {
             timestamp: Date.now()
         }).then(() => {
             showToast('تم إرسال طلب تغيير الـ ID بنجاح');
+            notifyNewIdChange(currentUser.name, oldId, newId, shipmentOwnerId, shipmentMonth, shipmentAmount);
             document.getElementById('oldId').value = '';
             document.getElementById('newId').value = '';
             document.getElementById('idChangeNote').value = '';
@@ -1530,6 +1589,89 @@ function clearAllData() {
     }).catch(err => {
         showToast('❌ حدث خطأ أثناء المسح: ' + err.message);
     });
+}
+
+// Telegram Notification System
+let telegramSettings = { token: '', chatId: '' };
+
+function loadTelegramSettings() {
+    db.ref('settings/telegram').on('value', snap => {
+        const data = snap.val() || {};
+        telegramSettings.token = data.token || '';
+        telegramSettings.chatId = data.chatId || '';
+        document.getElementById('telegramBotToken').value = telegramSettings.token;
+        document.getElementById('telegramChatId').value = telegramSettings.chatId;
+    });
+}
+
+function saveTelegramSettings() {
+    const token = document.getElementById('telegramBotToken').value.trim();
+    const chatId = document.getElementById('telegramChatId').value.trim();
+    if (!token || !chatId) return showToast('يرجى ملء التوكن والـ Chat ID');
+    db.ref('settings/telegram').set({ token, chatId, updatedAt: Date.now() }).then(() => {
+        telegramSettings = { token, chatId };
+        showToast('✅ تم حفظ إعدادات التلجرام');
+    });
+}
+
+function testTelegramConnection() {
+    if (!telegramSettings.token || !telegramSettings.chatId) {
+        showToast('⚠️ يرجى حفظ الإعدادات أولاً');
+        return;
+    }
+    const msg = '📡 <b>اختبار اتصال</b>\n\n✅ إعدادات التلجرام شغالة تمام!\n🤖 Niu Chat Admin Panel';
+    sendTelegramMessage(msg).then(ok => {
+        if (ok) showToast('✅ تم إرسال رسالة الاختبار بنجاح');
+        else showToast('❌ فشل الإرسال، تأكد من التوكن والـ Chat ID');
+    });
+}
+
+function sendTelegramMessage(message) {
+    return new Promise((resolve) => {
+        if (!telegramSettings.token || !telegramSettings.chatId) {
+            console.log('Telegram not configured');
+            resolve(false);
+            return;
+        }
+        const url = `https://api.telegram.org/bot${telegramSettings.token}/sendMessage`;
+        const body = {
+            chat_id: telegramSettings.chatId,
+            text: message,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        };
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.ok) resolve(true);
+            else { console.error('Telegram error:', data); resolve(false); }
+        })
+        .catch(err => { console.error('Telegram fetch error:', err); resolve(false); });
+    });
+}
+
+function notifyNewReport(adminName, sectionName, items, reportedId) {
+    let itemsText = '';
+    if (items && items.length > 0) {
+        itemsText = '\n📋 <b>البلاغات:</b>\n' + items.map(i => `• ${i}`).join('\n');
+    }
+    const msg = `🚨 <b>بلاغ جديد وارد!</b>\n\n👤 <b>الأدمن:</b> ${adminName}\n📁 <b>القسم:</b> ${sectionName}${itemsText}\n🆔 <b>ID المتهم:</b> <code>${reportedId}</code>\n\n⏰ ${new Date().toLocaleString('ar-EG')}`;
+    sendTelegramMessage(msg);
+}
+
+function notifyNewWelcome(adminName, ids) {
+    const idsText = ids.map(idObj => `• [${idObj.type}] <code>${idObj.id}</code>`).join('\n');
+    const msg = `💡 <b>أيدية ترحيب جديدة!</b>\n\n👤 <b>الأدمن:</b> ${adminName}\n\n🆔 <b>الـ IDs المرتبطة:</b>\n${idsText}\n\n⏰ ${new Date().toLocaleString('ar-EG')}`;
+    sendTelegramMessage(msg);
+}
+
+function notifyNewIdChange(adminName, oldId, newId, shipmentOwnerId, shipmentMonth, shipmentAmount) {
+    const msg = `🔄 <b>طلب تغيير ID جديد!</b>\n\n👤 <b>الأدمن:</b> ${adminName}\n\n🆔 <b>الـ ID القديم:</b> <code>${oldId}</code>\n🆕 <b>الـ ID المطلوب:</b> <code>${newId}</code>\n📦 <b>صاحب الشحنة:</b> <code>${shipmentOwnerId}</code>\n📅 <b>الشهر:</b> ${shipmentMonth}\n💰 <b>القيمة:</b> ${shipmentAmount}$\n\n⏰ ${new Date().toLocaleString('ar-EG')}`;
+    sendTelegramMessage(msg);
 }
 
 // Init/Update manager password to 1987
