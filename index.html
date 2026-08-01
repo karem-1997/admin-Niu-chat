@@ -359,18 +359,11 @@ body::before {
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label class="block text-sm text-slate-400 mb-2">ID صاحب الشكوى:</label>
-                                <input type="text" id="reporterId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل ID صاحب الشكوى">
-                            </div>
-                            <div>
                                 <label class="block text-sm text-slate-400 mb-2">ID اللي عليه الشكوة:</label>
                                 <input type="text" id="reportedId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل ID المتهم">
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <label class="block text-sm text-slate-400 mb-2">شرح المشكلة:</label>
-                            <textarea id="reportDescription" rows="3" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="اكتب شرح المشكلة بالتفصيل..."></textarea>
-                        </div>
+                        
                         <button onclick="submitReport()" class="btn-primary px-8 py-3 rounded-xl font-bold text-white">
                             <i class="fas fa-paper-plane ml-2"></i>إرسال البلاغ
                         </button>
@@ -449,6 +442,19 @@ body::before {
                             <option value="10">أكتوبر</option>
                             <option value="11">نوفمبر</option>
                             <option value="12">ديسمبر</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-2">قيمة الشحنة:</label>
+                        <select id="shipmentAmount" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500">
+                            <option value="">اختر قيمة الشحنة</option>
+                            <option value="100">100$</option>
+                            <option value="300">300$</option>
+                            <option value="500">500$</option>
+                            <option value="1000">1000$</option>
+                            <option value="2000">2000$</option>
+                            <option value="3000">3000$</option>
+                            <option value="5000">5000$</option>
                         </select>
                     </div>
                 </div>
@@ -783,17 +789,6 @@ function loadProblems() {
                         <p class="text-white font-medium mb-2">${rep.item || rep.content || 'بلاغ'}</p>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                            ${rep.reporterId ? `
-                                <div class="bg-slate-800/50 rounded-lg p-2 flex items-center justify-between">
-                                    <div>
-                                        <p class="text-xs text-slate-500">ID صاحب الشكوى</p>
-                                        <p class="text-white font-mono text-sm">${rep.reporterId}</p>
-                                    </div>
-                                    <button onclick="copyText('${rep.reporterId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </div>
-                            ` : ''}
                             ${rep.reportedId ? `
                                 <div class="bg-slate-800/50 rounded-lg p-2 flex items-center justify-between">
                                     <div>
@@ -891,6 +886,14 @@ function loadIdChanges() {
                                     <div>
                                         <p class="text-xs text-red-400 mb-1"><i class="fas fa-calendar ml-1"></i>الشهر</p>
                                         <p class="text-white font-mono text-sm">${item.shipmentMonth}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${item.shipmentAmount ? `
+                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
+                                    <div>
+                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-dollar-sign ml-1"></i>قيمة الشحنة</p>
+                                        <p class="text-white font-mono text-sm">${item.shipmentAmount}$</p>
                                     </div>
                                 </div>
                             ` : ''}
@@ -1181,12 +1184,10 @@ function submitReport() {
 
     const checkedItems = Array.from(document.querySelectorAll('input[name="sectionItem"]:checked')).map(cb => cb.value);
     const custom = document.getElementById('customReport').value.trim();
-    const reporterId = document.getElementById('reporterId').value.trim();
     const reportedId = document.getElementById('reportedId').value.trim();
-    const description = document.getElementById('reportDescription').value.trim();
 
     if (checkedItems.length === 0 && !custom) return showToast('يرجى اختيار بلاغ أو كتابة بلاغ جديد');
-    if (!reporterId || !reportedId) return showToast('يرجى ملء خانات الـ ID');
+    if (!reportedId) return showToast('يرجى ملء خانة الـ ID');
 
     const timestamp = Date.now();
 
@@ -1199,9 +1200,7 @@ function submitReport() {
             sectionId: selectedSectionId,
             sectionName: selectedSectionData.name,
             item,
-            reporterId,
             reportedId,
-            description,
             status: 'pending',
             timestamp
         }));
@@ -1214,9 +1213,7 @@ function submitReport() {
             sectionId: selectedSectionId,
             sectionName: selectedSectionData.name,
             content: custom,
-            reporterId,
             reportedId,
-            description,
             status: 'pending',
             timestamp
         }));
@@ -1224,9 +1221,7 @@ function submitReport() {
     Promise.all(promises).then(() => {
         showToast('تم إرسال البلاغ بنجاح');
         document.getElementById('customReport').value = '';
-        document.getElementById('reporterId').value = '';
         document.getElementById('reportedId').value = '';
-        document.getElementById('reportDescription').value = '';
         document.querySelectorAll('input[name="sectionItem"]:checked').forEach(cb => cb.checked = false);
     });
 }
@@ -1297,21 +1292,24 @@ function submitIdChange() {
     const note = document.getElementById('idChangeNote').value.trim();
     const shipmentOwnerId = document.getElementById('shipmentOwnerId').value.trim();
     const shipmentMonth = document.getElementById('shipmentMonth').value;
+    const shipmentAmount = document.getElementById('shipmentAmount').value;
 
     if (!oldId || !newId) return showToast('يرجى ملء خانة الـ ID القديم والمطلوب');
     if (!shipmentOwnerId) return showToast('يرجى إدخال ID صاحب الشحنة');
     if (!shipmentMonth) return showToast('يرجى اختيار الشهر');
+    if (!shipmentAmount) return showToast('يرجى اختيار قيمة الشحنة');
 
-    // Check for duplicate shipmentOwnerId + month across all idChanges
+    // Check for duplicate shipmentOwnerId + month + amount across all idChanges
     db.ref('idChanges').once('value').then(snap => {
         const idChanges = snap.val() || {};
         const duplicate = Object.values(idChanges).find(item => 
             item.shipmentOwnerId === shipmentOwnerId && 
-            String(item.shipmentMonth) === String(shipmentMonth)
+            String(item.shipmentMonth) === String(shipmentMonth) &&
+            String(item.shipmentAmount) === String(shipmentAmount)
         );
 
         if (duplicate) {
-            showToast('⚠️ هذا ID صاحب الشحنة مسجل مسبقاً للشهر ' + shipmentMonth + ' من قبل ' + (duplicate.adminName || 'أدمن'));
+            showToast('⚠️ هذا الطلب مسجل مسبقاً لنفس صاحب الشحنة والشهر وقيمة الشحنة ' + shipmentAmount + '$ من قبل ' + (duplicate.adminName || 'أدمن'));
             return;
         }
 
@@ -1324,6 +1322,7 @@ function submitIdChange() {
             note,
             shipmentOwnerId,
             shipmentMonth,
+            shipmentAmount,
             status: 'pending',
             timestamp: Date.now()
         }).then(() => {
@@ -1333,6 +1332,7 @@ function submitIdChange() {
             document.getElementById('idChangeNote').value = '';
             document.getElementById('shipmentOwnerId').value = '';
             document.getElementById('shipmentMonth').value = '';
+            document.getElementById('shipmentAmount').value = '';
         });
     });
 }
@@ -1399,6 +1399,7 @@ function loadMyReports() {
                         <div class="flex gap-3 mb-1">
                             ${item.shipmentOwnerId ? `<p class="text-xs text-red-400"><i class="fas fa-box ml-1"></i>صاحب الشحنة: <span class="text-white font-mono">${item.shipmentOwnerId}</span></p>` : ''}
                             ${item.shipmentMonth ? `<p class="text-xs text-red-400"><i class="fas fa-calendar ml-1"></i>الشهر: <span class="text-white font-mono">${item.shipmentMonth}</span></p>` : ''}
+                            ${item.shipmentAmount ? `<p class="text-xs text-red-400"><i class="fas fa-dollar-sign ml-1"></i>القيمة: <span class="text-white font-mono">${item.shipmentAmount}$</span></p>` : ''}
                         </div>
                         ${item.note ? `<p class="text-xs text-slate-500"><i class="fas fa-sticky-note ml-1"></i>${item.note}</p>` : ''}
                         <p class="text-xs text-slate-600 mt-2">${new Date(item.timestamp).toLocaleString('ar-EG')}</p>
