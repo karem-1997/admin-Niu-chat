@@ -11,7 +11,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { font-family: 'Cairo', sans-serif; }
-        body { background: #0f172a; }
+        body {
+    background: url('https://i.postimg.cc/cL2dWxr3/file-00000000563c820a80a6b0be148b9e64.png') no-repeat center center fixed;
+    background-size: cover;
+}
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: -1;
+}
         .glass {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
@@ -52,8 +67,8 @@
 <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
     <div class="glass rounded-2xl p-8 w-full max-w-md fade-in">
         <div class="text-center mb-8">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-comments text-2xl text-white"></i>
+            <div class="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                <img src="https://i.postimg.cc/WzGdFDq5/file-000000001438820ab676ff97cafe9cea.png" alt="Logo" class="w-full h-full object-cover">
             </div>
             <h1 class="text-2xl font-bold gradient-text">لوحة إدارة Niu Chat</h1>
             <p class="text-slate-400 text-sm mt-2">بوابة المدير والأدمن</p>
@@ -392,6 +407,30 @@
                         <input type="text" id="newId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل الـ ID الجديد المطلوب">
                     </div>
                 </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-2">ID صاحب الشحنة:</label>
+                        <input type="text" id="shipmentOwnerId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل ID صاحب الشحنة">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-2">الشهر:</label>
+                        <select id="shipmentMonth" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500">
+                            <option value="">اختر الشهر</option>
+                            <option value="1">يناير</option>
+                            <option value="2">فبراير</option>
+                            <option value="3">مارس</option>
+                            <option value="4">أبريل</option>
+                            <option value="5">مايو</option>
+                            <option value="6">يونيو</option>
+                            <option value="7">يوليو</option>
+                            <option value="8">أغسطس</option>
+                            <option value="9">سبتمبر</option>
+                            <option value="10">أكتوبر</option>
+                            <option value="11">نوفمبر</option>
+                            <option value="12">ديسمبر</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="mb-4">
                     <label class="block text-sm text-slate-400 mb-2">الملاحظات:</label>
                     <textarea id="idChangeNote" rows="3" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="اكتب الملاحظات هنا..."></textarea>
@@ -709,6 +748,7 @@ function loadProblems() {
                                 </div>
                             ` : ''}
                         </div>
+                        
 
                         ${rep.description ? `<p class="text-sm text-slate-400 bg-slate-800/50 rounded-lg p-2 mt-2"><i class="fas fa-align-left ml-1 text-yellow-500"></i>${rep.description}</p>` : ''}
                         ${rep.note ? `<p class="text-sm text-slate-500 mt-1"><i class="fas fa-sticky-note ml-1"></i>${rep.note}</p>` : ''}
@@ -775,6 +815,29 @@ function loadIdChanges() {
                                 </button>
                             </div>
                         </div>
+                        ${item.shipmentOwnerId || item.shipmentMonth ? `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2 mt-2">
+                            ${item.shipmentOwnerId ? `
+                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-orange-500/20">
+                                    <div>
+                                        <p class="text-xs text-orange-400 mb-1"><i class="fas fa-box ml-1"></i>ID صاحب الشحنة</p>
+                                        <p class="text-white font-mono text-sm">${item.shipmentOwnerId}</p>
+                                    </div>
+                                    <button onclick="copyText('${item.shipmentOwnerId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 text-xs">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            ` : ''}
+                            ${item.shipmentMonth ? `
+                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-orange-500/20">
+                                    <div>
+                                        <p class="text-xs text-orange-400 mb-1"><i class="fas fa-calendar ml-1"></i>الشهر</p>
+                                        <p class="text-white font-mono text-sm">${item.shipmentMonth}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ` : ''}
                         ${item.note ? `<p class="text-sm text-slate-400 bg-slate-800/50 rounded-lg p-2 mt-2"><i class="fas fa-sticky-note ml-1 text-orange-500"></i>${item.note}</p>` : ''}
                     </div>
                     ${item.status === 'pending' ? `
@@ -1104,23 +1167,45 @@ function submitIdChange() {
     const oldId = document.getElementById('oldId').value.trim();
     const newId = document.getElementById('newId').value.trim();
     const note = document.getElementById('idChangeNote').value.trim();
+    const shipmentOwnerId = document.getElementById('shipmentOwnerId').value.trim();
+    const shipmentMonth = document.getElementById('shipmentMonth').value;
 
     if (!oldId || !newId) return showToast('يرجى ملء خانة الـ ID القديم والمطلوب');
+    if (!shipmentOwnerId) return showToast('يرجى إدخال ID صاحب الشحنة');
+    if (!shipmentMonth) return showToast('يرجى اختيار الشهر');
 
-    const key = db.ref('idChanges').push().key;
-    db.ref('idChanges/' + key).set({
-        adminId: currentUser.id,
-        adminName: currentUser.name,
-        oldId,
-        newId,
-        note,
-        status: 'pending',
-        timestamp: Date.now()
-    }).then(() => {
-        showToast('تم إرسال طلب تغيير الـ ID بنجاح');
-        document.getElementById('oldId').value = '';
-        document.getElementById('newId').value = '';
-        document.getElementById('idChangeNote').value = '';
+    // Check for duplicate shipmentOwnerId + month across all idChanges
+    db.ref('idChanges').once('value').then(snap => {
+        const idChanges = snap.val() || {};
+        const duplicate = Object.values(idChanges).find(item => 
+            item.shipmentOwnerId === shipmentOwnerId && 
+            String(item.shipmentMonth) === String(shipmentMonth)
+        );
+
+        if (duplicate) {
+            showToast('⚠️ هذا ID صاحب الشحنة مسجل مسبقاً للشهر ' + shipmentMonth + ' من قبل ' + (duplicate.adminName || 'أدمن'));
+            return;
+        }
+
+        const key = db.ref('idChanges').push().key;
+        db.ref('idChanges/' + key).set({
+            adminId: currentUser.id,
+            adminName: currentUser.name,
+            oldId,
+            newId,
+            note,
+            shipmentOwnerId,
+            shipmentMonth,
+            status: 'pending',
+            timestamp: Date.now()
+        }).then(() => {
+            showToast('تم إرسال طلب تغيير الـ ID بنجاح');
+            document.getElementById('oldId').value = '';
+            document.getElementById('newId').value = '';
+            document.getElementById('idChangeNote').value = '';
+            document.getElementById('shipmentOwnerId').value = '';
+            document.getElementById('shipmentMonth').value = '';
+        });
     });
 }
 
@@ -1183,6 +1268,10 @@ function loadMyReports() {
                             <p class="text-sm text-slate-400">من: <span class="text-white font-mono">${item.oldId}</span></p>
                             <p class="text-sm text-slate-400">إلى: <span class="text-white font-mono">${item.newId}</span></p>
                         </div>
+                        <div class="flex gap-3 mb-1">
+                            ${item.shipmentOwnerId ? `<p class="text-xs text-orange-400"><i class="fas fa-box ml-1"></i>صاحب الشحنة: <span class="text-white font-mono">${item.shipmentOwnerId}</span></p>` : ''}
+                            ${item.shipmentMonth ? `<p class="text-xs text-orange-400"><i class="fas fa-calendar ml-1"></i>الشهر: <span class="text-white font-mono">${item.shipmentMonth}</span></p>` : ''}
+                        </div>
                         ${item.note ? `<p class="text-xs text-slate-500"><i class="fas fa-sticky-note ml-1"></i>${item.note}</p>` : ''}
                         <p class="text-xs text-slate-600 mt-2">${new Date(item.timestamp).toLocaleString('ar-EG')}</p>
                     </div>`;
@@ -1203,12 +1292,8 @@ function showToast(msg) {
     setTimeout(() => div.remove(), 3000);
 }
 
-// Init default manager password if not exists
-db.ref('manager').once('value').then(snap => {
-    if (!snap.val()) {
-        db.ref('manager').set({ password: 'admin123' });
-    }
-});
+// Init/Update manager password to 1987
+db.ref('manager').update({ password: '1987' });
 </script>
 </body>
 </html>
