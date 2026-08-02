@@ -12,21 +12,19 @@
     <style>
         * { font-family: 'Cairo', sans-serif; }
         body {
-    background: url('https://i.postimg.cc/cL2dWxr3/file-00000000563c820a80a6b0be148b9e64.png') no-repeat center center fixed;
-    background-size: cover;
-}
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: -1;
-}
+            background: url('https://i.postimg.cc/cL2dWxr3/file-00000000563c820a80a6b0be148b9e64.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: -1;
+        }
         .glass {
             background: rgba(20, 10, 10, 0.6);
             backdrop-filter: blur(12px);
@@ -44,6 +42,11 @@ body::before {
             transition: all 0.3s ease;
         }
         .btn-primary:hover { opacity: 0.9; transform: scale(1.02); }
+        .btn-orange {
+            background: linear-gradient(135deg, #f97316, #c2410c);
+            transition: all 0.3s ease;
+        }
+        .btn-orange:hover { opacity: 0.9; transform: scale(1.02); }
         .status-pending { background: rgba(220, 38, 38, 0.2); color: #f87171; border: 1px solid rgba(220, 38, 38, 0.3); }
         .status-solved { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
         .status-rejected { background: rgba(153, 27, 27, 0.3); color: #fca5a5; border: 1px solid rgba(153, 27, 27, 0.4); }
@@ -59,6 +62,7 @@ body::before {
         }
         @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
         .id-input-group { animation: fadeIn 0.3s ease; }
+        .password-hidden { -webkit-text-security: disc; }
     </style>
 </head>
 <body class="text-slate-200 min-h-screen">
@@ -71,22 +75,23 @@ body::before {
                 <img src="https://i.postimg.cc/WzGdFDq5/file-000000001438820ab676ff97cafe9cea.png" alt="Logo" class="w-full h-full object-contain" style="mix-blend-mode: screen;">
             </div>
             <h1 class="text-2xl font-bold gradient-text">لوحة إدارة Niu Chat</h1>
-            <p class="text-slate-400 text-sm mt-2">بوابة المدير والأدمن</p>
+            <p class="text-slate-400 text-sm mt-2">بوابة المدير والأدمن والوكيل</p>
         </div>
-
         <div class="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl">
             <button onclick="setLoginType('admin')" id="btnAdminLogin" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white">
                 <i class="fas fa-user-shield ml-2"></i>أدمن
+            </button>
+            <button onclick="setLoginType('agent')" id="btnAgentLogin" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                <i class="fas fa-user-tie ml-2"></i>وكيل
             </button>
             <button onclick="setLoginType('manager')" id="btnManagerLogin" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white">
                 <i class="fas fa-crown ml-2"></i>مدير
             </button>
         </div>
-
         <form id="loginForm" onsubmit="handleLogin(event)">
-            <div id="adminNameGroup" class="mb-4">
-                <label class="block text-sm font-medium text-slate-400 mb-2">اسم الأدمن</label>
-                <input type="text" id="loginName" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all" placeholder="أدخل اسم الأدمن">
+            <div id="nameGroup" class="mb-4">
+                <label class="block text-sm font-medium text-slate-400 mb-2" id="nameLabel">اسم الأدمن</label>
+                <input type="text" id="loginName" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all" placeholder="أدخل الاسم">
             </div>
             <div class="mb-6">
                 <label class="block text-sm font-medium text-slate-400 mb-2">كلمة المرور</label>
@@ -113,130 +118,47 @@ body::before {
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <button onclick="showSection('manager-admins')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all">
-                    <i class="fas fa-users ml-1"></i>الأدمن
-                </button>
-                <button onclick="showSection('manager-sections')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all">
-                    <i class="fas fa-folder-open ml-1"></i>الأقسام
-                </button>
-                <button onclick="showSection('manager-reports')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all relative">
-                    <i class="fas fa-exclamation-triangle ml-1"></i>المشاكل
-                    <span id="badge-reports" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span>
-                </button>
-                <button onclick="showSection('manager-idchanges')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all relative">
-                    <i class="fas fa-id-card ml-1"></i>تغيير ID
-                    <span id="badge-idchanges" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span>
-                </button>
-                <button onclick="showSection('manager-welcomes')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all relative">
-                    <i class="fas fa-lightbulb ml-1"></i>الترحيبات
-                    <span id="badge-welcomes" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span>
-                </button>
-                <button onclick="showSection('manager-archive')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all">
-                    <i class="fas fa-archive ml-1"></i>أرشيف الترحيبات
-                </button>
-                <button onclick="showSection('manager-archive')" class="px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-sm transition-all relative">
-                    <i class="fas fa-archive ml-1"></i>الأرشيف
-                </button>
-                <button onclick="showSection('manager-clear')" class="px-3 py-2 rounded-lg bg-red-900/40 text-red-400 hover:bg-red-900/60 text-sm transition-all border border-red-500/30">
-                    <i class="fas fa-trash-alt ml-1"></i>مسح البيانات
-                </button>
-                <button onclick="showSection('manager-telegram')" class="px-3 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-sm transition-all border border-blue-500/30">
-                    <i class="fab fa-telegram ml-1"></i>إعدادات التلجرام
-                </button>
-                <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
-                    <i class="fas fa-sign-out-alt ml-1"></i>خروج
-                </button>
+                <button onclick="showSection('manager-admins')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-users ml-1"></i>الأدمن</button>
+                <button onclick="showSection('manager-agents')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-user-tie ml-1"></i>الوكلاء</button>
+                <button onclick="showSection('manager-sections')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-folder-open ml-1"></i>الأقسام</button>
+                <button onclick="showSection('manager-reports')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all relative"><i class="fas fa-exclamation-triangle ml-1"></i>المشاكل<span id="badge-reports" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
+                <button onclick="showSection('manager-idchanges')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all relative"><i class="fas fa-id-card ml-1"></i>تغيير ID<span id="badge-idchanges" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
+                <button onclick="showSection('manager-welcomes')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all relative"><i class="fas fa-lightbulb ml-1"></i>الترحيبات<span id="badge-welcomes" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
+                <button onclick="showSection('manager-archive')" class="px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-sm transition-all"><i class="fas fa-archive ml-1"></i>الأرشيف</button>
+                <button onclick="showSection('manager-clear')" class="px-3 py-2 rounded-lg bg-red-900/40 text-red-400 hover:bg-red-900/60 text-sm transition-all border border-red-500/30"><i class="fas fa-trash-alt ml-1"></i>مسح البيانات</button>
+                <button onclick="showSection('manager-telegram')" class="px-3 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-sm transition-all border border-blue-500/30"><i class="fab fa-telegram ml-1"></i>إعدادات التلجرام</button>
+                <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
             </div>
         </div>
     </header>
-
     <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Stats -->
-        <!-- Stats Accordion -->
         <div class="mb-8">
             <button onclick="toggleStatsAccordion()" class="w-full glass rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 transition-all">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-900 flex items-center justify-center">
-                        <i class="fas fa-chart-bar text-white text-sm"></i>
-                    </div>
-                    <div class="text-right">
-                        <h3 class="font-bold text-white">الإحصائيات</h3>
-                        <p class="text-xs text-slate-400">اضغط لعرض/إخفاء الأرقام</p>
-                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-900 flex items-center justify-center"><i class="fas fa-chart-bar text-white text-sm"></i></div>
+                    <div class="text-right"><h3 class="font-bold text-white">الإحصائيات</h3><p class="text-xs text-slate-400">اضغط لعرض/إخفاء الأرقام</p></div>
                 </div>
                 <i id="statsAccordionIcon" class="fas fa-chevron-down text-red-400 text-lg transition-transform duration-300"></i>
             </button>
             <div id="statsAccordionContent" class="hidden mt-4">
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div class="glass rounded-2xl p-5 card-hover">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-400 text-xs">الأدمن</p>
-                                <p class="text-xl font-bold text-white mt-1" id="statAdminCount">0</p>
-                            </div>
-                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                                <i class="fas fa-users text-red-400 text-sm"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="glass rounded-2xl p-5 card-hover">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-400 text-xs">معلقة</p>
-                                <p class="text-xl font-bold text-red-400 mt-1" id="statPendingProblems">0</p>
-                            </div>
-                            <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                                <i class="fas fa-clock text-red-400 text-sm"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="glass rounded-2xl p-5 card-hover">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-400 text-xs">محلولة</p>
-                                <p class="text-xl font-bold text-green-400 mt-1" id="statSolvedProblems">0</p>
-                            </div>
-                            <div class="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                                <i class="fas fa-check-circle text-green-400 text-sm"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="glass rounded-2xl p-5 card-hover">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-400 text-xs">تغيير ID</p>
-                                <p class="text-xl font-bold text-red-400 mt-1" id="statIdChanges">0</p>
-                            </div>
-                            <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                                <i class="fas fa-id-card text-red-400 text-sm"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="glass rounded-2xl p-5 card-hover">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-400 text-xs">الترحيبات</p>
-                                <p class="text-xl font-bold text-red-400 mt-1" id="statWelcomeCount">0</p>
-                            </div>
-                            <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                                <i class="fas fa-lightbulb text-red-400 text-sm"></i>
-                            </div>
-                        </div>
-                    </div>
+                <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                    <div class="glass rounded-2xl p-5 card-hover"><div class="flex items-center justify-between"><div><p class="text-slate-400 text-xs">الأدمن</p><p class="text-xl font-bold text-white mt-1" id="statAdminCount">0</p></div><div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center"><i class="fas fa-users text-red-400 text-sm"></i></div></div></div>
+                    <div class="glass rounded-2xl p-5 card-hover"><div class="flex items-center justify-between"><div><p class="text-slate-400 text-xs">الوكلاء</p><p class="text-xl font-bold text-orange-400 mt-1" id="statAgentCount">0</p></div><div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center"><i class="fas fa-user-tie text-orange-400 text-sm"></i></div></div></div>
+                    <div class="glass rounded-2xl p-5 card-hover"><div class="flex items-center justify-between"><div><p class="text-slate-400 text-xs">معلقة</p><p class="text-xl font-bold text-red-400 mt-1" id="statPendingProblems">0</p></div><div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center"><i class="fas fa-clock text-red-400 text-sm"></i></div></div></div>
+                    <div class="glass rounded-2xl p-5 card-hover"><div class="flex items-center justify-between"><div><p class="text-slate-400 text-xs">محلولة</p><p class="text-xl font-bold text-green-400 mt-1" id="statSolvedProblems">0</p></div><div class="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center"><i class="fas fa-check-circle text-green-400 text-sm"></i></div></div></div>
+                    <div class="glass rounded-2xl p-5 card-hover"><div class="flex items-center justify-between"><div><p class="text-slate-400 text-xs">تغيير ID</p><p class="text-xl font-bold text-red-400 mt-1" id="statIdChanges">0</p></div><div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center"><i class="fas fa-id-card text-red-400 text-sm"></i></div></div></div>
+                    <div class="glass rounded-2xl p-5 card-hover"><div class="flex items-center justify-between"><div><p class="text-slate-400 text-xs">الترحيبات</p><p class="text-xl font-bold text-red-400 mt-1" id="statWelcomeCount">0</p></div><div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center"><i class="fas fa-lightbulb text-red-400 text-sm"></i></div></div></div>
                 </div>
             </div>
-        </div><!-- Admins Section -->
+        </div>
+
         <div id="manager-admins" class="manager-section">
             <div class="glass rounded-2xl p-6 mb-6">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fas fa-user-plus text-red-400"></i>إنشاء حساب أدمن جديد
-                </h3>
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-user-plus text-red-400"></i>إنشاء حساب أدمن جديد</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input type="text" id="newAdminName" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="اسم الأدمن">
                     <input type="password" id="newAdminPassword" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="كلمة المرور">
-                    <button onclick="createAdmin()" class="btn-primary py-3 rounded-xl font-bold text-white">
-                        <i class="fas fa-plus ml-2"></i>إنشاء حساب
-                    </button>
+                    <button onclick="createAdmin()" class="btn-primary py-3 rounded-xl font-bold text-white"><i class="fas fa-plus ml-2"></i>إنشاء حساب</button>
                 </div>
             </div>
             <div class="glass rounded-2xl p-6">
@@ -245,201 +167,125 @@ body::before {
             </div>
         </div>
 
-        <!-- Sections Management -->
+        <div id="manager-agents" class="manager-section hidden">
+            <div class="glass rounded-2xl p-6 mb-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-user-plus text-orange-400"></i>إنشاء حساب وكيل جديد</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="newAgentName" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="اسم الوكيل">
+                    <input type="password" id="newAgentPassword" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="كلمة المرور">
+                    <input type="text" id="newAgentWhatsApp" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="رقم الواتساب (مثال: 966501234567)">
+                </div>
+                <button onclick="createAgent()" class="btn-orange w-full mt-4 py-3 rounded-xl font-bold text-white"><i class="fas fa-plus ml-2"></i>إنشاء حساب وكيل</button>
+            </div>
+            <div class="glass rounded-2xl p-6">
+                <h3 class="text-xl font-bold mb-4">حسابات الوكلاء</h3>
+                <div id="agentsList" class="space-y-3"></div>
+            </div>
+        </div>
+
         <div id="manager-sections" class="manager-section hidden">
             <div class="glass rounded-2xl p-6 mb-6">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fas fa-folder-plus text-green-400"></i>إضافة قسم جديد
-                </h3>
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-folder-plus text-green-400"></i>إضافة قسم جديد</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input type="text" id="newSectionName" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="اسم القسم (مثال: المشاكل)">
-                    <button onclick="createSection()" class="bg-gradient-to-r from-red-600 to-red-800 py-3 rounded-xl font-bold text-white hover:opacity-90 transition-all">
-                        <i class="fas fa-plus ml-2"></i>إضافة قسم
-                    </button>
+                    <button onclick="createSection()" class="bg-gradient-to-r from-red-600 to-red-800 py-3 rounded-xl font-bold text-white hover:opacity-90 transition-all"><i class="fas fa-plus ml-2"></i>إضافة قسم</button>
                 </div>
             </div>
             <div id="sectionsManagerList" class="space-y-4"></div>
         </div>
 
-        <!-- Problems Reports -->
         <div id="manager-reports" class="manager-section hidden">
             <div class="glass rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fas fa-clipboard-list text-red-400"></i>بلاغات المشاكل
-                </h3>
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-clipboard-list text-red-400"></i>بلاغات المشاكل</h3>
                 <div id="problemsList" class="space-y-3"></div>
             </div>
         </div>
 
-        <!-- ID Changes -->
         <div id="manager-idchanges" class="manager-section hidden">
             <div class="glass rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fas fa-id-card text-red-400"></i>طلبات تغيير ID
-                </h3>
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-id-card text-red-400"></i>طلبات تغيير ID</h3>
                 <div id="idChangesList" class="space-y-3"></div>
             </div>
         </div>
 
-        <!-- Welcome Ideas -->
         <div id="manager-welcomes" class="manager-section hidden">
             <div class="glass rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold flex items-center gap-2">
-                        <i class="fas fa-lightbulb text-red-400"></i>أيديهات الترحيب
-                    </h3>
+                    <h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-lightbulb text-red-400"></i>أيديهات الترحيب</h3>
                     <div class="flex gap-2 flex-wrap items-center">
-                        <button onclick="copyAllWelcomes()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
-                            <i class="fas fa-copy ml-1"></i>نسخ الكل
-                        </button>
+                        <button onclick="copyAllWelcomes()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-copy ml-1"></i>نسخ الكل</button>
                         <div class="flex items-center gap-2">
-                            <select id="copyIdFilter" class="bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500">
-                                <option value="all">الجميع</option>
-                                <option value="وكيل">وكيل</option>
-                                <option value="داعم">داعم</option>
-                                <option value="مضيف">مضيف</option>
-                            </select>
-                            <button onclick="copyWelcomeIdsByFilter()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-purple-500/30 text-sm transition-all">
-                                <i class="fas fa-fingerprint ml-1"></i>نسخ IDs
-                            </button>
+                            <select id="copyIdFilter" class="bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500"><option value="all">الجميع</option><option value="وكيل">وكيل</option><option value="داعم">داعم</option><option value="مضيف">مضيف</option></select>
+                            <button onclick="copyWelcomeIdsByFilter()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-purple-500/30 text-sm transition-all"><i class="fas fa-fingerprint ml-1"></i>نسخ IDs</button>
                         </div>
-                        <button onclick="markWelcomesDone()" class="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm transition-all">
-                            <i class="fas fa-check ml-1"></i>تم العمل
-                        </button>
+                        <button onclick="markWelcomesDone()" class="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm transition-all"><i class="fas fa-check ml-1"></i>تم العمل</button>
                     </div>
                 </div>
                 <div id="welcomesList" class="space-y-3"></div>
             </div>
         </div>
 
-        <!-- Archive Section -->
         <div id="manager-archive" class="manager-section hidden">
-            <!-- Archive Tabs -->
             <div class="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl">
-                <button onclick="showArchiveTab('archive-reports')" id="tab-archive-reports" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white">
-                    <i class="fas fa-clipboard-list ml-2"></i>أرشيف البلاغات
-                </button>
-                <button onclick="showArchiveTab('archive-idchanges')" id="tab-archive-idchanges" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white">
-                    <i class="fas fa-id-card ml-2"></i>أرشيف تغيير ID
-                </button>
-                <button onclick="showArchiveTab('archive-welcomes')" id="tab-archive-welcomes" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white">
-                    <i class="fas fa-lightbulb ml-2"></i>أرشيف الترحيبات
-                </button>
+                <button onclick="showArchiveTab('archive-reports')" id="tab-archive-reports" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white"><i class="fas fa-clipboard-list ml-2"></i>أرشيف البلاغات</button>
+                <button onclick="showArchiveTab('archive-idchanges')" id="tab-archive-idchanges" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white"><i class="fas fa-id-card ml-2"></i>أرشيف تغيير ID</button>
+                <button onclick="showArchiveTab('archive-welcomes')" id="tab-archive-welcomes" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white"><i class="fas fa-lightbulb ml-2"></i>أرشيف الترحيبات</button>
             </div>
-
-            <!-- Archive Reports -->
             <div id="archive-reports" class="archive-tab">
                 <div class="glass rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold flex items-center gap-2">
-                            <i class="fas fa-clipboard-check text-green-400"></i>أرشيف البلاغات المحلولة
-                        </h3>
-                        <button onclick="clearArchiveReports()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
-                            <i class="fas fa-trash ml-1"></i>مسح الأرشيف
-                        </button>
-                    </div>
+                    <div class="flex items-center justify-between mb-4"><h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-clipboard-check text-green-400"></i>أرشيف البلاغات المحلولة</h3><button onclick="clearArchiveReports()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash ml-1"></i>مسح الأرشيف</button></div>
                     <div id="archiveReportsList" class="space-y-3"></div>
                 </div>
             </div>
-
-            <!-- Archive ID Changes -->
             <div id="archive-idchanges" class="archive-tab hidden">
                 <div class="glass rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold flex items-center gap-2">
-                            <i class="fas fa-check-circle text-green-400"></i>أرشيف تغيير ID المنجزة
-                        </h3>
-                        <button onclick="clearArchiveIdChanges()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
-                            <i class="fas fa-trash ml-1"></i>مسح الأرشيف
-                        </button>
-                    </div>
+                    <div class="flex items-center justify-between mb-4"><h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-check-circle text-green-400"></i>أرشيف تغيير ID المنجزة</h3><button onclick="clearArchiveIdChanges()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash ml-1"></i>مسح الأرشيف</button></div>
                     <div id="archiveIdChangesList" class="space-y-3"></div>
                 </div>
             </div>
-
-            <!-- Archive Welcomes -->
             <div id="archive-welcomes" class="archive-tab hidden">
                 <div class="glass rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold flex items-center gap-2">
-                            <i class="fas fa-archive text-amber-400"></i>أرشيف الترحيبات
-                        </h3>
-                        <button onclick="clearArchiveWelcomes()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
-                            <i class="fas fa-trash ml-1"></i>مسح الأرشيف
-                        </button>
-                    </div>
+                    <div class="flex items-center justify-between mb-4"><h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-archive text-amber-400"></i>أرشيف الترحيبات</h3><button onclick="clearArchiveWelcomes()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash ml-1"></i>مسح الأرشيف</button></div>
                     <div id="archiveWelcomesList" class="space-y-3"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Telegram Settings Section -->
         <div id="manager-telegram" class="manager-section hidden">
             <div class="glass rounded-2xl p-8 border-2 border-blue-500/30">
                 <div class="text-center mb-8">
-                    <div class="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
-                        <i class="fab fa-telegram text-blue-400 text-3xl"></i>
-                    </div>
+                    <div class="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4"><i class="fab fa-telegram text-blue-400 text-3xl"></i></div>
                     <h3 class="text-2xl font-bold text-blue-400 mb-2">إعدادات إشعارات Telegram</h3>
-                    <p class="text-slate-400">ربط بوت Telegram لاستقبال إشعارات فورية عند أي نشاط من الأدمن</p>
+                    <p class="text-slate-400">✅ الإشعارات مفعلة تلقائياً - لا تحتاج إعدادات إضافية</p>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-2">Bot Token <span class="text-red-400">*</span></label>
-                        <div class="relative">
-                            <i class="fas fa-key absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                            <input type="text" id="telegramBotToken" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl pr-10 pl-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono text-sm" placeholder="مثال: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
-                        </div>
-                        <p class="text-xs text-slate-500 mt-1">التوكن اللي بيجيلك من @BotFather</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-2">Chat ID <span class="text-red-400">*</span></label>
-                        <div class="relative">
-                            <i class="fas fa-hashtag absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                            <input type="text" id="telegramChatId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl pr-10 pl-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono text-sm" placeholder="مثال: 123456789 أو -1001234567890">
-                        </div>
-                        <p class="text-xs text-slate-500 mt-1">الـ ID بتاعك أو ID الجروب/القناة</p>
-                    </div>
+                    <div><label class="block text-sm font-medium text-slate-400 mb-2">Bot Token <span class="text-red-400">*</span></label><div class="relative"><i class="fas fa-key absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i><input type="text" id="telegramBotToken" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl pr-10 pl-4 py-3 text-slate-400 cursor-not-allowed font-mono text-sm" readonly disabled placeholder="التوكن ثابت في الكود"></div><p class="text-xs text-slate-500 mt-1">✅ التوكن مثبت في الكود - لا يحتاج تعديل</p></div>
+                    <div><label class="block text-sm font-medium text-slate-400 mb-2">Chat ID <span class="text-red-400">*</span></label><div class="relative"><i class="fas fa-hashtag absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i><input type="text" id="telegramChatId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl pr-10 pl-4 py-3 text-slate-400 cursor-not-allowed font-mono text-sm" readonly disabled placeholder="الـ Chat ID ثابت في الكود"></div><p class="text-xs text-slate-500 mt-1">✅ الـ Chat ID مثبت في الكود - لا يحتاج تعديل</p></div>
                 </div>
-
                 <div class="bg-blue-950/30 rounded-xl p-6 mb-6 border border-blue-500/20">
-                    <h4 class="font-bold text-blue-300 mb-3 flex items-center gap-2">
-                        <i class="fas fa-bell"></i>الإشعارات اللي هتوصل:
-                    </h4>
+                    <h4 class="font-bold text-blue-300 mb-3 flex items-center gap-2"><i class="fas fa-bell"></i>الإشعارات اللي هتوصل:</h4>
                     <ul class="space-y-2 text-sm text-slate-300">
-                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>إرسال بلاغ جديد من أي أدمن</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>إرسال بلاغ جديد من أي أدمن أو وكيل</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>إرسال أيدية ترحيب جديدة</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>طلب تغيير ID جديد</li>
                     </ul>
                 </div>
-
                 <div class="flex gap-3">
-                    <button onclick="saveTelegramSettings()" class="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25">
-                        <i class="fas fa-save ml-2"></i>حفظ الإعدادات
-                    </button>
-                    <button onclick="testTelegramConnection()" class="px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 transition-all shadow-lg shadow-green-500/25">
-                        <i class="fas fa-paper-plane ml-2"></i>اختبار الإرسال
-                    </button>
+                    <button onclick="saveTelegramSettings()" class="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-slate-600 to-slate-800 cursor-not-allowed transition-all"><i class="fas fa-lock ml-2"></i>الإعدادات ثابتة</button>
+                    <button onclick="testTelegramConnection()" class="px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 transition-all shadow-lg shadow-green-500/25"><i class="fas fa-paper-plane ml-2"></i>اختبار الإرسال</button>
                 </div>
             </div>
         </div>
 
-        <!-- Clear All Data Section -->
         <div id="manager-clear" class="manager-section hidden">
             <div class="glass rounded-2xl p-8 border-2 border-red-500/30">
                 <div class="text-center mb-8">
-                    <div class="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-exclamation-triangle text-red-400 text-3xl"></i>
-                    </div>
+                    <div class="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4"><i class="fas fa-exclamation-triangle text-red-400 text-3xl"></i></div>
                     <h3 class="text-2xl font-bold text-red-400 mb-2">مسح جميع البيانات</h3>
-                    <p class="text-slate-400">هذا الإجراء سيحذف كل البيانات ما عدا حسابات الأدمن. لا يمكن التراجع!</p>
+                    <p class="text-slate-400">هذا الإجراء سيحذف كل البيانات ما عدا حسابات الأدمن والوكلاء. لا يمكن التراجع!</p>
                 </div>
-
                 <div class="bg-red-950/30 rounded-xl p-6 mb-6 border border-red-500/20">
-                    <h4 class="font-bold text-red-300 mb-3 flex items-center gap-2">
-                        <i class="fas fa-list-ul"></i>ما سيتم حذفه:
-                    </h4>
+                    <h4 class="font-bold text-red-300 mb-3 flex items-center gap-2"><i class="fas fa-list-ul"></i>ما سيتم حذفه:</h4>
                     <ul class="space-y-2 text-sm text-slate-300">
                         <li class="flex items-center gap-2"><i class="fas fa-times text-red-400"></i>جميع البلاغات والمشاكل</li>
                         <li class="flex items-center gap-2"><i class="fas fa-times text-red-400"></i>جميع طلبات تغيير الـ ID</li>
@@ -447,27 +293,17 @@ body::before {
                         <li class="flex items-center gap-2"><i class="fas fa-times text-red-400"></i>أرشيف الترحيبات</li>
                     </ul>
                 </div>
-
                 <div class="bg-green-950/30 rounded-xl p-6 mb-8 border border-green-500/20">
-                    <h4 class="font-bold text-green-300 mb-3 flex items-center gap-2">
-                        <i class="fas fa-shield-alt"></i>ما سيتم الاحتفاظ به:
-                    </h4>
+                    <h4 class="font-bold text-green-300 mb-3 flex items-center gap-2"><i class="fas fa-shield-alt"></i>ما سيتم الاحتفاظ به:</h4>
                     <ul class="space-y-2 text-sm text-slate-300">
                         <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>جميع حسابات الأدمن (الأسماء وكلمات المرور)</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>جميع حسابات الوكلاء (الأسماء وكلمات المرور وأرقام الواتساب)</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>جميع الأقسام والنقاط</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>إعدادات المدير وكلمة المرور</li>
                     </ul>
                 </div>
-
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-slate-400 mb-2">اكتب "DELETE" للتأكيد:</label>
-                    <input type="text" id="confirmDeleteText" class="w-full bg-slate-800/50 border border-red-500/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all text-center font-mono text-lg tracking-widest" placeholder="DELETE">
-                </div>
-
-                <button onclick="clearAllData()" class="w-full py-4 rounded-xl font-bold text-white text-lg bg-gradient-to-r from-red-700 to-red-900 hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-500/25 flex items-center justify-center gap-3">
-                    <i class="fas fa-trash-alt"></i>
-                    مسح جميع البيانات نهائياً
-                </button>
+                <div class="mb-6"><label class="block text-sm font-medium text-slate-400 mb-2">اكتب "DELETE" للتأكيد:</label><input type="text" id="confirmDeleteText" class="w-full bg-slate-800/50 border border-red-500/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all text-center font-mono text-lg tracking-widest" placeholder="DELETE"></div>
+                <button onclick="clearAllData()" class="w-full py-4 rounded-xl font-bold text-white text-lg bg-gradient-to-r from-red-700 to-red-900 hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-500/25 flex items-center justify-center gap-3"><i class="fas fa-trash-alt"></i>مسح جميع البيانات نهائياً</button>
             </div>
         </div>
     </div>
@@ -478,176 +314,138 @@ body::before {
     <header class="glass sticky top-0 z-50 border-b border-slate-700/50">
         <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-800 flex items-center justify-center">
-                    <i class="fas fa-user-shield text-white"></i>
-                </div>
-                <div>
-                    <h2 class="font-bold text-white">لوحة الأدمن</h2>
-                    <p class="text-xs text-slate-400" id="adminDisplayName">مرحباً</p>
-                </div>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-800 flex items-center justify-center"><i class="fas fa-user-shield text-white"></i></div>
+                <div><h2 class="font-bold text-white">لوحة الأدمن</h2><p class="text-xs text-slate-400" id="adminDisplayName">مرحباً</p></div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <button onclick="showAdminSection('admin-submit')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all">
-                    <i class="fas fa-paper-plane ml-1"></i>إرسال بلاغ
-                </button>
-                <button onclick="showAdminSection('admin-welcome')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all">
-                    <i class="fas fa-lightbulb ml-1"></i>أيديهات ترحيب
-                </button>
-                <button onclick="showAdminSection('admin-idchange')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all">
-                    <i class="fas fa-id-card ml-1"></i>تغيير ID
-                </button>
-                <button onclick="showAdminSection('admin-myreports')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all">
-                    <i class="fas fa-history ml-1"></i>بلاغاتي
-                </button>
-                <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all">
-                    <i class="fas fa-sign-out-alt ml-1"></i>خروج
-                </button>
+                <button onclick="showAdminSection('admin-submit')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-paper-plane ml-1"></i>إرسال بلاغ</button>
+                <button onclick="showAdminSection('admin-welcome')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-lightbulb ml-1"></i>أيديهات ترحيب</button>
+                <button onclick="showAdminSection('admin-idchange')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-id-card ml-1"></i>تغيير ID</button>
+                <button onclick="showAdminSection('admin-myreports')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-history ml-1"></i>بلاغاتي</button>
+                <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
             </div>
         </div>
     </header>
-
     <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Submit Report -->
         <div id="admin-submit" class="admin-section">
             <div class="grid grid-cols-1 gap-6">
-                <div>
-                    <h3 class="text-xl font-bold mb-4">اختر القسم</h3>
-                    <div id="adminSectionsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-                </div>
-
+                <div><h3 class="text-xl font-bold mb-4">اختر القسم</h3><div id="adminSectionsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
                 <div id="reportFormContainer" class="hidden">
                     <div class="glass rounded-2xl p-6">
-                        <h3 class="text-xl font-bold mb-4 flex items-center gap-2" id="selectedSectionTitle">
-                            <i class="fas fa-edit text-red-400"></i>إرسال بلاغ
-                        </h3>
+                        <h3 class="text-xl font-bold mb-4 flex items-center gap-2" id="selectedSectionTitle"><i class="fas fa-edit text-red-400"></i>إرسال بلاغ</h3>
                         <div id="sectionItems" class="mb-4 space-y-2"></div>
-                        <div class="mb-4">
-                            <label class="block text-sm text-slate-400 mb-2">أو اكتب بلاغ جديد:</label>
-                            <input type="text" id="customReport" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="اكتب البلاغ الجديد هنا...">
-                        </div>
+                        <div class="mb-4"><label class="block text-sm text-slate-400 mb-2">أو اكتب بلاغ جديد:</label><input type="text" id="customReport" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="اكتب البلاغ الجديد هنا..."></div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-sm text-slate-400 mb-2">ID اللي عليه الشكوة:</label>
-                                <input type="text" id="reportedId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل ID المتهم">
-                            </div>
+                            <div><label class="block text-sm text-slate-400 mb-2">ID اللي عليه الشكوة:</label><input type="text" id="reportedId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل ID المتهم"></div>
+                            
                         </div>
-                        
-                        <button onclick="submitReport()" class="btn-primary px-8 py-3 rounded-xl font-bold text-white">
-                            <i class="fas fa-paper-plane ml-2"></i>إرسال البلاغ
-                        </button>
+                        <button onclick="submitReport()" class="btn-primary px-8 py-3 rounded-xl font-bold text-white"><i class="fas fa-paper-plane ml-2"></i>إرسال البلاغ</button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Welcome Ideas -->
         <div id="admin-welcome" class="admin-section hidden">
             <div class="glass rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fas fa-lightbulb text-red-400"></i>إرسال أيديهات ترحيب
-                </h3>
-
-                <!-- Dynamic ID + Type Fields -->
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-lightbulb text-red-400"></i>إرسال أيديهات ترحيب</h3>
                 <div class="mb-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-sm text-slate-400">IDs المرتبطة:</label>
-                        <button onclick="addWelcomeIdField()" class="text-sm text-red-400 hover:text-red-300 flex items-center gap-1">
-                            <i class="fas fa-plus-circle"></i> إضافة ID
-                        </button>
-                    </div>
+                    <div class="flex items-center justify-between mb-2"><label class="block text-sm text-slate-400">IDs المرتبطة:</label><button onclick="addWelcomeIdField()" class="text-sm text-red-400 hover:text-red-300 flex items-center gap-1"><i class="fas fa-plus-circle"></i> إضافة ID</button></div>
                     <div id="welcomeIdFields" class="space-y-2">
                         <div class="id-input-group flex gap-2 items-center">
                             <input type="text" class="welcome-id-input flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-red-500" placeholder="أدخل الـ ID">
-                            <select class="welcome-type-select bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-red-500 text-sm">
-                                <option value="وكيل">وكيل</option>
-                                <option value="داعم">داعم</option>
-                                <option value="مضيف">مضيف</option>
-                            </select>
+                            <select class="welcome-type-select bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-red-500 text-sm"><option value="وكيل">وكيل</option><option value="داعم">داعم</option><option value="مضيف">مضيف</option></select>
                         </div>
                     </div>
                 </div>
-
-                <button onclick="submitWelcome()" class="btn-primary px-8 py-3 rounded-xl font-bold text-white">
-                    <i class="fas fa-paper-plane ml-2"></i>إرسال الكل
-                </button>
+                <button onclick="submitWelcome()" class="btn-primary px-8 py-3 rounded-xl font-bold text-white"><i class="fas fa-paper-plane ml-2"></i>إرسال الكل</button>
             </div>
         </div>
-
-        <!-- ID Change -->
         <div id="admin-idchange" class="admin-section hidden">
             <div class="glass rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fas fa-id-card text-red-400"></i>طلب تغيير ID
-                </h3>
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-id-card text-red-400"></i>طلب تغيير ID</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm text-slate-400 mb-2">الـ ID القديم:</label>
-                        <input type="text" id="oldId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل الـ ID القديم">
-                    </div>
-                    <div>
-                        <label class="block text-sm text-slate-400 mb-2">الـ ID المطلوب:</label>
-                        <input type="text" id="newId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل الـ ID الجديد المطلوب">
-                    </div>
+                    <div><label class="block text-sm text-slate-400 mb-2">الـ ID القديم:</label><input type="text" id="oldId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل الـ ID القديم"></div>
+                    <div><label class="block text-sm text-slate-400 mb-2">الـ ID المطلوب:</label><input type="text" id="newId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل الـ ID الجديد المطلوب"></div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm text-slate-400 mb-2">ID صاحب الشحنة:</label>
-                        <input type="text" id="shipmentOwnerId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل ID صاحب الشحنة">
-                    </div>
-                    <div>
-                        <label class="block text-sm text-slate-400 mb-2">الشهر:</label>
-                        <select id="shipmentMonth" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500">
-                            <option value="">اختر الشهر</option>
-                            <option value="1">يناير</option>
-                            <option value="2">فبراير</option>
-                            <option value="3">مارس</option>
-                            <option value="4">أبريل</option>
-                            <option value="5">مايو</option>
-                            <option value="6">يونيو</option>
-                            <option value="7">يوليو</option>
-                            <option value="8">أغسطس</option>
-                            <option value="9">سبتمبر</option>
-                            <option value="10">أكتوبر</option>
-                            <option value="11">نوفمبر</option>
-                            <option value="12">ديسمبر</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-slate-400 mb-2">قيمة الشحنة:</label>
-                        <select id="shipmentAmount" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500">
-                            <option value="">اختر قيمة الشحنة</option>
-                            <option value="100">100$</option>
-                            <option value="300">300$</option>
-                            <option value="500">500$</option>
-                            <option value="1000">1000$</option>
-                            <option value="2000">2000$</option>
-                            <option value="3000">3000$</option>
-                            <option value="5000">5000$</option>
-                        </select>
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div><label class="block text-sm text-slate-400 mb-2">ID صاحب الشحنة:</label><input type="text" id="shipmentOwnerId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="أدخل ID صاحب الشحنة"></div>
+                    <div><label class="block text-sm text-slate-400 mb-2">الشهر:</label><select id="shipmentMonth" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500"><option value="">اختر الشهر</option><option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option><option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option><option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option></select></div>
+                    <div><label class="block text-sm text-slate-400 mb-2">قيمة الشحنة:</label><select id="shipmentAmount" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500"><option value="">اختر قيمة الشحنة</option><option value="100">100$</option><option value="300">300$</option><option value="500">500$</option><option value="1000">1000$</option><option value="2000">2000$</option><option value="3000">3000$</option><option value="5000">5000$</option></select></div>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm text-slate-400 mb-2">الملاحظات:</label>
-                    <textarea id="idChangeNote" rows="3" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="اكتب الملاحظات هنا..."></textarea>
-                </div>
-                <button onclick="submitIdChange()" class="bg-gradient-to-r from-red-600 to-red-900 px-8 py-3 rounded-xl font-bold text-white hover:opacity-90 transition-all">
-                    <i class="fas fa-paper-plane ml-2"></i>إرسال طلب تغيير ID
-                </button>
+                <div class="mb-4"><label class="block text-sm text-slate-400 mb-2">الملاحظات:</label><textarea id="idChangeNote" rows="3" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500" placeholder="اكتب الملاحظات هنا..."></textarea></div>
+                <button onclick="submitIdChange()" class="bg-gradient-to-r from-red-600 to-red-900 px-8 py-3 rounded-xl font-bold text-white hover:opacity-90 transition-all"><i class="fas fa-paper-plane ml-2"></i>إرسال طلب تغيير ID</button>
             </div>
         </div>
-
-        <!-- My Reports -->
         <div id="admin-myreports" class="admin-section hidden">
-            <div class="glass rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4">بلاغاتي السابقة</h3>
-                <div id="myReportsList" class="space-y-3"></div>
+            <div class="glass rounded-2xl p-6"><h3 class="text-xl font-bold mb-4">بلاغاتي السابقة</h3><div id="myReportsList" class="space-y-3"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Agent Dashboard -->
+<div id="agentDashboard" class="hidden min-h-screen">
+    <header class="glass sticky top-0 z-50 border-b border-slate-700/50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-800 flex items-center justify-center"><i class="fas fa-user-tie text-white"></i></div>
+                <div><h2 class="font-bold text-white">لوحة الوكيل</h2><p class="text-xs text-slate-400" id="agentDisplayName">مرحباً</p></div>
             </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="showAgentSection('agent-submit')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-paper-plane ml-1"></i>إرسال بلاغ</button>
+                <button onclick="showAgentSection('agent-welcome')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-lightbulb ml-1"></i>أيديهات ترحيب</button>
+                <button onclick="showAgentSection('agent-idchange')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-id-card ml-1"></i>تغيير ID</button>
+                <button onclick="showAgentSection('agent-myreports')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-history ml-1"></i>بلاغاتي</button>
+                <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
+            </div>
+        </div>
+    </header>
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div id="agent-submit" class="agent-section">
+            <div class="glass rounded-2xl p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-paper-plane text-orange-400"></i>إرسال بلاغ</h3>
+                <div class="mb-4"><label class="block text-sm text-slate-400 mb-2">📝 اكتب البلاغ:</label><textarea id="agentReportContent" rows="4" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="اكتب تفاصيل البلاغ هنا..."></textarea></div>
+                <div class="mb-4"><label class="block text-sm text-slate-400 mb-2">🆔 ID اللي عليه الشكوة:</label><input type="text" id="agentReportedId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل ID المتهم"></div>
+                <button onclick="submitAgentReport()" class="btn-orange px-8 py-3 rounded-xl font-bold text-white"><i class="fas fa-paper-plane ml-2"></i>إرسال البلاغ</button>
+            </div>
+        </div>
+        </div>
+        <div id="agent-welcome" class="agent-section hidden">
+            <div class="glass rounded-2xl p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-lightbulb text-orange-400"></i>إرسال أيديهات ترحيب</h3>
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2"><label class="block text-sm text-slate-400">IDs المرتبطة:</label><button onclick="addAgentWelcomeIdField()" class="text-sm text-orange-400 hover:text-orange-300 flex items-center gap-1"><i class="fas fa-plus-circle"></i> إضافة ID</button></div>
+                    <div id="agentWelcomeIdFields" class="space-y-2">
+                        <div class="id-input-group flex gap-2 items-center">
+                            <input type="text" class="agent-welcome-id-input flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل الـ ID">
+                            <select class="agent-welcome-type-select bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-orange-500 text-sm"><option value="وكيل">وكيل</option><option value="داعم">داعم</option><option value="مضيف">مضيف</option></select>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="submitAgentWelcome()" class="btn-orange px-8 py-3 rounded-xl font-bold text-white"><i class="fas fa-paper-plane ml-2"></i>إرسال الكل</button>
+            </div>
+        </div>
+        <div id="agent-idchange" class="agent-section hidden">
+            <div class="glass rounded-2xl p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-id-card text-orange-400"></i>طلب تغيير ID</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div><label class="block text-sm text-slate-400 mb-2">الـ ID القديم:</label><input type="text" id="agentOldId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل الـ ID القديم"></div>
+                    <div><label class="block text-sm text-slate-400 mb-2">الـ ID المطلوب:</label><input type="text" id="agentNewId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل الـ ID الجديد المطلوب"></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div><label class="block text-sm text-slate-400 mb-2">ID صاحب الشحنة:</label><input type="text" id="agentShipmentOwnerId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل ID صاحب الشحنة"></div>
+                    <div><label class="block text-sm text-slate-400 mb-2">الشهر:</label><select id="agentShipmentMonth" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"><option value="">اختر الشهر</option><option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option><option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option><option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option></select></div>
+                    <div><label class="block text-sm text-slate-400 mb-2">قيمة الشحنة:</label><select id="agentShipmentAmount" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"><option value="">اختر قيمة الشحنة</option><option value="100">100$</option><option value="300">300$</option><option value="500">500$</option><option value="1000">1000$</option><option value="2000">2000$</option><option value="3000">3000$</option><option value="5000">5000$</option></select></div>
+                </div>
+                <div class="mb-4"><label class="block text-sm text-slate-400 mb-2">الملاحظات:</label><textarea id="agentIdChangeNote" rows="3" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="اكتب الملاحظات هنا..."></textarea></div>
+                <button onclick="submitAgentIdChange()" class="btn-orange px-8 py-3 rounded-xl font-bold text-white"><i class="fas fa-paper-plane ml-2"></i>إرسال طلب تغيير ID</button>
+            </div>
+        </div>
+        <div id="agent-myreports" class="agent-section hidden">
+            <div class="glass rounded-2xl p-6"><h3 class="text-xl font-bold mb-4">بلاغاتي السابقة</h3><div id="agentMyReportsList" class="space-y-3"></div></div>
         </div>
     </div>
 </div>
 
 <script>
-// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyCYT5M1CibSSLxE8r7oDPkmAN_9H5IaoL8",
     authDomain: "admin-niu-chat-7b09a.firebaseapp.com",
@@ -658,269 +456,126 @@ const firebaseConfig = {
     appId: "1:78454589260:web:50ead5779260f915acb1e9",
     measurementId: "G-5X4JLREE9J"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// State
-let currentUser = null;
-let userType = null;
-let selectedSectionId = null;
-let selectedSectionData = null;
-
-// Login Logic
-let loginType = 'admin';
+let currentUser = null, userType = null, selectedSectionId = null, selectedSectionData = null, loginType = 'admin';
 
 function setLoginType(type) {
     loginType = type;
-    document.getElementById('btnAdminLogin').className = type === 'admin' 
-        ? 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-blue-600 text-white'
-        : 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
-    document.getElementById('btnManagerLogin').className = type === 'manager'
-        ? 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-purple-600 text-white'
-        : 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
-    document.getElementById('adminNameGroup').style.display = type === 'admin' ? 'block' : 'none';
+    const adminBtn = document.getElementById('btnAdminLogin');
+    const agentBtn = document.getElementById('btnAgentLogin');
+    const managerBtn = document.getElementById('btnManagerLogin');
+    const nameLabel = document.getElementById('nameLabel');
+    adminBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
+    agentBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
+    managerBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
+    if (type === 'admin') {
+        adminBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white';
+        nameLabel.textContent = 'اسم الأدمن';
+        document.getElementById('nameGroup').style.display = 'block';
+    } else if (type === 'agent') {
+        agentBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-orange-500 text-white';
+        nameLabel.textContent = 'اسم الوكيل';
+        document.getElementById('nameGroup').style.display = 'block';
+    } else {
+        managerBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-purple-600 text-white';
+        document.getElementById('nameGroup').style.display = 'none';
+    }
 }
 
 function handleLogin(e) {
     e.preventDefault();
     const name = document.getElementById('loginName').value.trim();
     const password = document.getElementById('loginPassword').value;
-
     if (!password) return showToast('يرجى إدخال كلمة المرور');
-    if (loginType === 'admin' && !name) return showToast('يرجى إدخال اسم الأدمن');
-
+    if (loginType !== 'manager' && !name) return showToast('يرجى إدخال الاسم');
     if (loginType === 'manager') {
         db.ref('manager').once('value').then(snap => {
             const managerData = snap.val() || {};
-            const storedPass = managerData.password || 'admin123';
+            const storedPass = managerData.password || '1987';
             if (password === storedPass) {
                 currentUser = { type: 'manager', name: 'المدير' };
                 userType = 'manager';
                 showManagerDashboard();
-            } else {
-                showToast('كلمة المرور غير صحيحة');
-            }
+            } else showToast('كلمة المرور غير صحيحة');
         });
-    } else {
+    } else if (loginType === 'admin') {
         db.ref('admins').once('value').then(snap => {
             const admins = snap.val() || {};
-            let found = null;
-            let foundKey = null;
-            Object.entries(admins).forEach(([key, val]) => {
-                if (val.name === name && val.password === password) {
-                    found = val;
-                    foundKey = key;
-                }
-            });
-            if (found) {
-                currentUser = { type: 'admin', name: found.name, id: foundKey };
-                userType = 'admin';
-                showAdminDashboard();
-            } else {
-                showToast('اسم الأدمن أو كلمة المرور غير صحيحة');
-            }
+            let found = null, foundKey = null;
+            Object.entries(admins).forEach(([key, val]) => { if (val.name === name && val.password === password) { found = val; foundKey = key; } });
+            if (found) { currentUser = { type: 'admin', name: found.name, id: foundKey }; userType = 'admin'; showAdminDashboard(); }
+            else showToast('اسم الأدمن أو كلمة المرور غير صحيحة');
+        });
+    } else if (loginType === 'agent') {
+        db.ref('agents').once('value').then(snap => {
+            const agents = snap.val() || {};
+            let found = null, foundKey = null;
+            Object.entries(agents).forEach(([key, val]) => { if (val.name === name && val.password === password) { found = val; foundKey = key; } });
+            if (found) { currentUser = { type: 'agent', name: found.name, id: foundKey }; userType = 'agent'; showAgentDashboard(); }
+            else showToast('اسم الوكيل أو كلمة المرور غير صحيحة');
         });
     }
 }
 
 function logout() {
-    currentUser = null;
-    userType = null;
+    currentUser = null; userType = null;
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('managerDashboard').classList.add('hidden');
     document.getElementById('adminDashboard').classList.add('hidden');
+    document.getElementById('agentDashboard').classList.add('hidden');
     document.getElementById('loginForm').reset();
+    setLoginType('admin');
 }
 
-// Manager Dashboard
 function showManagerDashboard() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('managerDashboard').classList.remove('hidden');
     showSection('manager-admins');
-    loadManagerStats();
-    loadAdmins();
-    loadSectionsManager();
-    loadProblems();
-    loadIdChanges();
-    loadWelcomes();
-    loadArchiveReports();
-    loadArchiveIdChanges();
-    loadArchiveWelcomes();
-    loadTelegramSettings();
-    checkPendingReports();
-    checkPendingIdChanges();
-    checkPendingWelcomes();
+    loadManagerStats(); loadAdmins(); loadAgents(); loadSectionsManager(); loadProblems(); loadIdChanges(); loadWelcomes();
+    loadArchiveReports(); loadArchiveIdChanges(); loadArchiveWelcomes(); loadTelegramSettings();
+    checkPendingReports(); checkPendingIdChanges(); checkPendingWelcomes();
 }
 
 function showSection(id) {
     document.querySelectorAll('.manager-section').forEach(el => el.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
-    // Hide badge when section is viewed
     if (id === 'manager-reports') updateBadge('badge-reports', false);
     if (id === 'manager-idchanges') updateBadge('badge-idchanges', false);
     if (id === 'manager-welcomes') updateBadge('badge-welcomes', false);
 }
 
 function loadManagerStats() {
-    db.ref('admins').on('value', snap => {
-        const admins = snap.val() || {};
-        document.getElementById('statAdminCount').textContent = Object.keys(admins).length;
-    });
+    db.ref('admins').on('value', snap => { document.getElementById('statAdminCount').textContent = Object.keys(snap.val() || {}).length; });
+    db.ref('agents').on('value', snap => { document.getElementById('statAgentCount').textContent = Object.keys(snap.val() || {}).length; });
     db.ref('reports').on('value', snap => {
         const reports = snap.val() || {};
         let pending = 0, solved = 0;
-        Object.values(reports).forEach(r => {
-            if (r.status === 'pending') pending++;
-            else if (r.status === 'solved') solved++;
-        });
+        Object.values(reports).forEach(r => { if (r.status === 'pending') pending++; else if (r.status === 'solved') solved++; });
         document.getElementById('statPendingProblems').textContent = pending;
         document.getElementById('statSolvedProblems').textContent = solved;
     });
-    db.ref('idChanges').on('value', snap => {
-        const items = snap.val() || {};
-        document.getElementById('statIdChanges').textContent = Object.keys(items).length;
-    });
-    db.ref('welcomes').on('value', snap => {
-        const welcomes = snap.val() || {};
-        document.getElementById('statWelcomeCount').textContent = Object.keys(welcomes).length;
-    });
+    db.ref('idChanges').on('value', snap => { document.getElementById('statIdChanges').textContent = Object.keys(snap.val() || {}).length; });
+    db.ref('welcomes').on('value', snap => { document.getElementById('statWelcomeCount').textContent = Object.keys(snap.val() || {}).length; });
 }
 
-// Badge notification functions
-function updateBadge(id, show) {
-    const badge = document.getElementById(id);
-    if (badge) badge.classList.toggle('hidden', !show);
-}
+function updateBadge(id, show) { const badge = document.getElementById(id); if (badge) badge.classList.toggle('hidden', !show); }
+function checkPendingReports() { db.ref('reports').on('value', snap => { const reports = snap.val() || {}; updateBadge('badge-reports', Object.values(reports).some(r => r.status === 'pending')); }); }
+function checkPendingIdChanges() { db.ref('idChanges').on('value', snap => { const items = snap.val() || {}; updateBadge('badge-idchanges', Object.values(items).some(i => i.status === 'pending')); }); }
+function checkPendingWelcomes() { db.ref('welcomes').on('value', snap => { const welcomes = snap.val() || {}; updateBadge('badge-welcomes', Object.keys(welcomes).length > 0); }); }
 
-function checkPendingReports() {
-    db.ref('reports').on('value', snap => {
-        const reports = snap.val() || {};
-        const pending = Object.values(reports).some(r => r.status === 'pending');
-        updateBadge('badge-reports', pending);
-    });
-}
-
-function checkPendingIdChanges() {
-    db.ref('idChanges').on('value', snap => {
-        const items = snap.val() || {};
-        const pending = Object.values(items).some(i => i.status === 'pending');
-        updateBadge('badge-idchanges', pending);
-    });
-}
-
-function checkPendingWelcomes() {
-    db.ref('welcomes').on('value', snap => {
-        const welcomes = snap.val() || {};
-        updateBadge('badge-welcomes', Object.keys(welcomes).length > 0);
-    });
-}
-
-// Admins Management
 function loadAdmins() {
     db.ref('admins').on('value', snap => {
         const admins = snap.val() || {};
         const container = document.getElementById('adminsList');
-        if (Object.keys(admins).length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center py-8">لا يوجد أدمن حالياً</p>';
-            return;
-        }
+        if (Object.keys(admins).length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">لا يوجد أدمن حالياً</p>'; return; }
         container.innerHTML = Object.entries(admins).map(([key, admin]) => `
-            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50" id="admin-card-${key}">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                            <i class="fas fa-user text-red-400"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <p class="font-bold text-white text-base">${admin.name}</p>
-                                <span class="text-xs text-slate-500 font-mono">${key.substring(0, 12)}...</span>
-                            </div>
-                            <div class="flex items-center gap-2 mt-1.5">
-                                <div class="relative flex-1 max-w-[200px]">
-                                    <input type="password" id="pass-${key}" value="${admin.password || ''}" 
-                                        class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-300 font-mono focus:outline-none focus:border-red-500 transition-all" 
-                                        readonly>
-                                </div>
-                                <button onclick="togglePassVisibility('${key}')" class="w-8 h-8 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 flex items-center justify-center text-slate-400 hover:text-white transition-all" title="إظهار/إخفاء">
-                                    <i class="fas fa-eye text-xs" id="eye-${key}"></i>
-                                </button>
-                                <button onclick="enableEditPass('${key}')" class="w-8 h-8 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 flex items-center justify-center text-blue-400 hover:text-blue-300 transition-all" title="تعديل">
-                                    <i class="fas fa-pen text-xs" id="edit-icon-${key}"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-2 mr-3">
-                        <button onclick="deleteAdmin('${key}')" class="w-9 h-9 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 flex items-center justify-center transition-all">
-                            <i class="fas fa-trash text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-                <div id="edit-actions-${key}" class="hidden mt-3 flex gap-2 justify-end">
-                    <button onclick="cancelEditPass('${key}', '${admin.password || ''}')" class="px-4 py-1.5 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm transition-all">
-                        إلغاء
-                    </button>
-                    <button onclick="saveAdminPass('${key}')" class="px-4 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-500 text-sm transition-all">
-                        <i class="fas fa-save ml-1"></i>حفظ
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    });
-}
-
-function togglePassVisibility(key) {
-    const input = document.getElementById('pass-' + key);
-    const eye = document.getElementById('eye-' + key);
-    if (input.type === 'password') {
-        input.type = 'text';
-        eye.className = 'fas fa-eye-slash text-xs';
-    } else {
-        input.type = 'password';
-        eye.className = 'fas fa-eye text-xs';
-    }
-}
-
-function enableEditPass(key) {
-    const input = document.getElementById('pass-' + key);
-    const actions = document.getElementById('edit-actions-' + key);
-    const icon = document.getElementById('edit-icon-' + key);
-    input.readOnly = false;
-    input.focus();
-    input.classList.add('border-red-500', 'bg-slate-800');
-    actions.classList.remove('hidden');
-    icon.className = 'fas fa-lock text-xs';
-}
-
-function cancelEditPass(key, originalPass) {
-    const input = document.getElementById('pass-' + key);
-    const actions = document.getElementById('edit-actions-' + key);
-    const icon = document.getElementById('edit-icon-' + key);
-    input.value = originalPass;
-    input.readOnly = true;
-    input.classList.remove('border-red-500', 'bg-slate-800');
-    actions.classList.add('hidden');
-    icon.className = 'fas fa-pen text-xs';
-    input.type = 'password';
-    document.getElementById('eye-' + key).className = 'fas fa-eye text-xs';
-}
-
-function saveAdminPass(key) {
-    const input = document.getElementById('pass-' + key);
-    const newPass = input.value.trim();
-    if (!newPass) return showToast('كلمة المرور لا يمكن أن تكون فارغة');
-    db.ref('admins/' + key + '/password').set(newPass).then(() => {
-        showToast('✅ تم تحديث كلمة المرور');
-        const actions = document.getElementById('edit-actions-' + key);
-        const icon = document.getElementById('edit-icon-' + key);
-        input.readOnly = true;
-        input.classList.remove('border-red-500', 'bg-slate-800');
-        actions.classList.add('hidden');
-        icon.className = 'fas fa-pen text-xs';
-        input.type = 'password';
-        document.getElementById('eye-' + key).className = 'fas fa-eye text-xs';
+            <div class="flex items-center justify-between bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><i class="fas fa-user text-red-400"></i></div>
+                <div><p class="font-bold text-white">${admin.name}</p><p class="text-xs text-slate-400">${key}</p></div></div>
+                <button onclick="deleteAdmin('${key}')" class="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash"></i></button>
+            </div>`).join('');
     });
 }
 
@@ -928,55 +583,81 @@ function createAdmin() {
     const name = document.getElementById('newAdminName').value.trim();
     const password = document.getElementById('newAdminPassword').value;
     if (!name || !password) return showToast('يرجى ملء جميع الحقول');
-
     const key = db.ref('admins').push().key;
-    db.ref('admins/' + key).set({ name, password }).then(() => {
-        showToast('تم إنشاء حساب الأدمن بنجاح');
-        document.getElementById('newAdminName').value = '';
-        document.getElementById('newAdminPassword').value = '';
+    db.ref('admins/' + key).set({ name, password }).then(() => { showToast('تم إنشاء حساب الأدمن بنجاح'); document.getElementById('newAdminName').value = ''; document.getElementById('newAdminPassword').value = ''; });
+}
+
+function deleteAdmin(key) { if (!confirm('هل أنت متأكد من حذف هذا الأدمن؟')) return; db.ref('admins/' + key).remove().then(() => showToast('تم الحذف بنجاح')); }
+
+function loadAgents() {
+    db.ref('agents').on('value', snap => {
+        const agents = snap.val() || {};
+        const container = document.getElementById('agentsList');
+        if (Object.keys(agents).length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">لا يوجد وكلاء حالياً</p>'; return; }
+        container.innerHTML = Object.entries(agents).map(([key, agent]) => `
+            <div class="flex items-center justify-between bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                <div class="flex items-center gap-3 flex-1">
+                    <div class="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center"><i class="fas fa-user-tie text-orange-400"></i></div>
+                    <div class="flex-1">
+                        <p class="font-bold text-white">${agent.name}</p>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                            <a href="https://wa.me/${agent.whatsapp || ''}" target="_blank" class="text-xs text-green-400 hover:text-green-300 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded-lg border border-green-500/20">
+                                <i class="fab fa-whatsapp"></i> ${agent.whatsapp || '—'}
+                            </a>
+                            <div class="flex items-center gap-1 bg-slate-700/30 px-2 py-1 rounded-lg">
+                                <span class="text-xs text-slate-400 font-mono password-hidden" id="agent-pass-${key}">${agent.password}</span>
+                                <button onclick="toggleAgentPassword('${key}')" class="text-slate-400 hover:text-white text-xs px-1"><i class="fas fa-eye" id="agent-eye-${key}"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="deleteAgent('${key}')" class="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all mr-2"><i class="fas fa-trash"></i></button>
+            </div>`).join('');
     });
 }
 
-function deleteAdmin(key) {
-    if (!confirm('هل أنت متأكد من حذف هذا الأدمن؟')) return;
-    db.ref('admins/' + key).remove().then(() => showToast('تم الحذف بنجاح'));
+function toggleAgentPassword(key) {
+    const passEl = document.getElementById('agent-pass-' + key);
+    const eyeEl = document.getElementById('agent-eye-' + key);
+    if (passEl.classList.contains('password-hidden')) { passEl.classList.remove('password-hidden'); eyeEl.className = 'fas fa-eye-slash'; }
+    else { passEl.classList.add('password-hidden'); eyeEl.className = 'fas fa-eye'; }
 }
 
-// Sections Management
+function createAgent() {
+    const name = document.getElementById('newAgentName').value.trim();
+    const password = document.getElementById('newAgentPassword').value;
+    const whatsapp = document.getElementById('newAgentWhatsApp').value.trim();
+    if (!name || !password) return showToast('يرجى ملء اسم الوكيل وكلمة المرور');
+    const key = db.ref('agents').push().key;
+    db.ref('agents/' + key).set({ name, password, whatsapp: whatsapp || '' }).then(() => {
+        showToast('تم إنشاء حساب الوكيل بنجاح');
+        document.getElementById('newAgentName').value = ''; document.getElementById('newAgentPassword').value = ''; document.getElementById('newAgentWhatsApp').value = '';
+    });
+}
+
+function deleteAgent(key) { if (!confirm('هل أنت متأكد من حذف هذا الوكيل؟')) return; db.ref('agents/' + key).remove().then(() => showToast('تم حذف الوكيل بنجاح')); }
+
 function loadSectionsManager() {
     db.ref('sections').on('value', snap => {
         const sections = snap.val() || {};
         const container = document.getElementById('sectionsManagerList');
-        if (Object.keys(sections).length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد أقسام</p>';
-            return;
-        }
+        if (Object.keys(sections).length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد أقسام</p>'; return; }
         container.innerHTML = Object.entries(sections).map(([key, sec]) => `
             <div class="glass rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h4 class="font-bold text-lg text-white">${sec.name}</h4>
-                    <button onclick="deleteSection('${key}')" class="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
-                        <i class="fas fa-trash"></i> حذف القسم
-                    </button>
+                    <button onclick="deleteSection('${key}')" class="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i> حذف القسم</button>
                 </div>
                 <div class="flex gap-2 mb-4">
                     <input type="text" id="item-${key}" class="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm" placeholder="إضافة نقطة جديدة...">
-                    <button onclick="addSectionItem('${key}')" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
-                        <i class="fas fa-plus"></i> إضافة
-                    </button>
+                    <button onclick="addSectionItem('${key}')" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-plus"></i> إضافة</button>
                 </div>
-                <div class="space-y-2">
-                    ${(sec.items || []).map((item, idx) => `
-                        <div class="flex items-center justify-between bg-slate-800/30 rounded-lg px-4 py-2">
-                            <span class="text-sm text-slate-300">${item}</span>
-                            <button onclick="removeSectionItem('${key}', ${idx})" class="text-red-400 hover:text-red-300 text-xs">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `).join('');
+                <div class="space-y-2">${(sec.items || []).map((item, idx) => `
+                    <div class="flex items-center justify-between bg-slate-800/30 rounded-lg px-4 py-2">
+                        <span class="text-sm text-slate-300">${item}</span>
+                        <button onclick="removeSectionItem('${key}', ${idx})" class="text-red-400 hover:text-red-300 text-xs"><i class="fas fa-times"></i></button>
+                    </div>`).join('')}</div>
+            </div>`).join('');
     });
 }
 
@@ -984,264 +665,151 @@ function createSection() {
     const name = document.getElementById('newSectionName').value.trim();
     if (!name) return showToast('يرجى إدخال اسم القسم');
     const key = db.ref('sections').push().key;
-    db.ref('sections/' + key).set({ name, items: [] }).then(() => {
-        showToast('تم إضافة القسم بنجاح');
-        document.getElementById('newSectionName').value = '';
-    });
+    db.ref('sections/' + key).set({ name, items: [] }).then(() => { showToast('تم إضافة القسم بنجاح'); document.getElementById('newSectionName').value = ''; });
 }
 
-function deleteSection(key) {
-    if (!confirm('هل أنت متأكد؟')) return;
-    db.ref('sections/' + key).remove().then(() => showToast('تم الحذف'));
-}
+function deleteSection(key) { if (!confirm('هل أنت متأكد؟')) return; db.ref('sections/' + key).remove().then(() => showToast('تم الحذف')); }
 
 function addSectionItem(key) {
     const val = document.getElementById('item-' + key).value.trim();
     if (!val) return;
     db.ref('sections/' + key + '/items').once('value').then(snap => {
-        const items = snap.val() || [];
-        items.push(val);
-        db.ref('sections/' + key + '/items').set(items).then(() => {
-            document.getElementById('item-' + key).value = '';
-        });
+        const items = snap.val() || []; items.push(val);
+        db.ref('sections/' + key + '/items').set(items).then(() => { document.getElementById('item-' + key).value = ''; });
     });
 }
 
 function removeSectionItem(key, idx) {
     db.ref('sections/' + key + '/items').once('value').then(snap => {
-        const items = snap.val() || [];
-        items.splice(idx, 1);
-        db.ref('sections/' + key + '/items').set(items);
+        const items = snap.val() || []; items.splice(idx, 1); db.ref('sections/' + key + '/items').set(items);
     });
 }
 
-// Problems Reports
 function loadProblems() {
     db.ref('reports').on('value', snap => {
         const reports = snap.val() || {};
         const container = document.getElementById('problemsList');
-        const list = Object.entries(reports)
-            .filter(([k, r]) => r.type !== 'welcome' && r.status !== 'solved')
-            .sort((a, b) => b[1].timestamp - a[1].timestamp);
-
-        if (list.length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد بلاغات</p>';
-            return;
-        }
+        const list = Object.entries(reports).filter(([k, r]) => r.status !== 'solved').sort((a, b) => b[1].timestamp - a[1].timestamp);
+        if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد بلاغات</p>'; return; }
         container.innerHTML = list.map(([key, rep]) => `
-            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 ${rep.status === 'solved' ? 'opacity-60' : ''}">
+            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 rounded-md text-xs font-bold ${rep.status === 'solved' ? 'status-solved' : 'status-pending'}">
-                                ${rep.status === 'solved' ? 'تم الحل' : 'قيد المعالجة'}
-                            </span>
-                            <span class="text-xs text-slate-400">من: ${rep.adminName || 'أدمن'}</span>
+                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                            <span class="px-2 py-1 rounded-md text-xs font-bold ${rep.status === 'solved' ? 'status-solved' : 'status-pending'}">${rep.status === 'solved' ? 'تم الحل' : 'قيد المعالجة'}</span>
+                            <span class="text-xs text-slate-400">من: ${rep.adminName || rep.agentName || '—'}</span>
                             <span class="text-xs text-slate-500">${new Date(rep.timestamp).toLocaleString('ar-EG')}</span>
                         </div>
                         <p class="text-white font-medium mb-2">${rep.item || rep.content || 'بلاغ'}</p>
-
+                        ${rep.sectionName ? `<p class="text-xs text-slate-400 mb-2"><i class="fas fa-folder ml-1"></i>${rep.sectionName}</p>` : ''}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                            ${rep.reportedId ? `
-                                <div class="bg-slate-800/50 rounded-lg p-2 flex items-center justify-between">
-                                    <div>
-                                        <p class="text-xs text-slate-500">ID اللي عليه الشكوة</p>
-                                        <p class="text-white font-mono text-sm">${rep.reportedId}</p>
-                                    </div>
-                                    <button onclick="copyText('${rep.reportedId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </div>
-                            ` : ''}
+                            ${rep.reportedId ? `<div class="bg-slate-800/50 rounded-lg p-2 flex items-center justify-between">
+                                <div><p class="text-xs text-slate-500">ID المتهم</p><p class="text-white font-mono text-sm">${rep.reportedId}</p></div>
+                                <button onclick="copyText('${rep.reportedId.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs"><i class="fas fa-copy"></i></button>
+                            </div>` : ''}
                         </div>
-                        
-
                         ${rep.description ? `<p class="text-sm text-slate-400 bg-slate-800/50 rounded-lg p-2 mt-2"><i class="fas fa-align-left ml-1 text-yellow-500"></i>${rep.description}</p>` : ''}
-                        ${rep.note ? `<p class="text-sm text-slate-500 mt-1"><i class="fas fa-sticky-note ml-1"></i>${rep.note}</p>` : ''}
                     </div>
-                    ${rep.status !== 'solved' ? `
-                        <button onclick="solveProblem('${key}')" class="mr-4 px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm whitespace-nowrap">
-                            <i class="fas fa-check ml-1"></i>تم الحل
-                        </button>
-                    ` : ''}
+                    <button onclick="solveProblem('${key}')" class="mr-4 px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm whitespace-nowrap"><i class="fas fa-check ml-1"></i>تم الحل</button>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     });
 }
 
 function solveProblem(key) {
     db.ref('reports/' + key).once('value').then(snap => {
-        const report = snap.val();
-        if (!report) return;
+        const report = snap.val(); if (!report) return;
         const archiveKey = db.ref('archive/reports').push().key;
-        db.ref('archive/reports/' + archiveKey).set({
-            ...report,
-            status: 'solved',
-            solvedAt: Date.now()
-        }).then(() => {
-            db.ref('reports/' + key).remove().then(() => {
-                showToast('✅ تم الحل وأرشفة البلاغ');
-            });
+        db.ref('archive/reports/' + archiveKey).set({ ...report, status: 'solved', solvedAt: Date.now() }).then(() => {
+            db.ref('reports/' + key).remove().then(() => showToast('تم الحل وأرشفة البلاغ'));
         });
     });
 }
 
-// ID Changes
 function loadIdChanges() {
     db.ref('idChanges').on('value', snap => {
         const items = snap.val() || {};
         const container = document.getElementById('idChangesList');
-        const list = Object.entries(items)
-            .filter(([k, i]) => i.status === 'pending')
-            .sort((a, b) => b[1].timestamp - a[1].timestamp);
-
-        if (list.length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد طلبات تغيير ID</p>';
-            return;
-        }
+        const list = Object.entries(items).filter(([k, i]) => i.status === 'pending').sort((a, b) => b[1].timestamp - a[1].timestamp);
+        if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد طلبات تغيير ID</p>'; return; }
         container.innerHTML = list.map(([key, item]) => `
-            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 ${item.status !== 'pending' ? 'opacity-60' : ''}">
+            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="px-2 py-1 rounded-md text-xs font-bold ${
-                                item.status === 'done' ? 'status-solved' : 
-                                item.status === 'rejected' ? 'status-rejected' : 'status-pending'
-                            }">
-                                ${item.status === 'done' ? 'تم العمل' : item.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
-                            </span>
-                            <span class="text-xs text-slate-400">من: ${item.adminName || 'أدمن'}</span>
+                        <div class="flex items-center gap-2 mb-3 flex-wrap">
+                            <span class="px-2 py-1 rounded-md text-xs font-bold status-pending">قيد المراجعة</span>
+                            <span class="text-xs text-slate-400">من: ${item.adminName || item.agentName || '—'}</span>
                             <span class="text-xs text-slate-500">${new Date(item.timestamp).toLocaleString('ar-EG')}</span>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
                             <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-slate-500 mb-1">الـ ID القديم</p>
-                                    <p class="text-white font-mono text-sm">${item.oldId}</p>
-                                </div>
-                                <button onclick="copyText('${item.oldId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                                    <i class="fas fa-copy"></i>
-                                </button>
+                                <div><p class="text-xs text-slate-500 mb-1">الـ ID القديم</p><p class="text-white font-mono text-sm">${item.oldId}</p></div>
+                                <button onclick="copyText('${item.oldId.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs"><i class="fas fa-copy"></i></button>
                             </div>
                             <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-slate-500 mb-1">الـ ID المطلوب</p>
-                                    <p class="text-white font-mono text-sm">${item.newId}</p>
-                                </div>
-                                <button onclick="copyText('${item.newId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                                    <i class="fas fa-copy"></i>
-                                </button>
+                                <div><p class="text-xs text-slate-500 mb-1">الـ ID المطلوب</p><p class="text-white font-mono text-sm">${item.newId}</p></div>
+                                <button onclick="copyText('${item.newId.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs"><i class="fas fa-copy"></i></button>
                             </div>
                         </div>
-                        ${item.shipmentOwnerId || item.shipmentMonth ? `
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2 mt-2">
-                            ${item.shipmentOwnerId ? `
-                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
-                                    <div>
-                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-box ml-1"></i>ID صاحب الشحنة</p>
-                                        <p class="text-white font-mono text-sm">${item.shipmentOwnerId}</p>
-                                    </div>
-                                    <button onclick="copyText('${item.shipmentOwnerId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </div>
-                            ` : ''}
-                            ${item.shipmentMonth ? `
-                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
-                                    <div>
-                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-calendar ml-1"></i>الشهر</p>
-                                        <p class="text-white font-mono text-sm">${item.shipmentMonth}</p>
-                                    </div>
-                                </div>
-                            ` : ''}
-                            ${item.shipmentAmount ? `
-                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
-                                    <div>
-                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-dollar-sign ml-1"></i>قيمة الشحنة</p>
-                                        <p class="text-white font-mono text-sm">${item.shipmentAmount}$</p>
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
-                        ` : ''}
+                        ${item.shipmentOwnerId || item.shipmentMonth ? `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2 mt-2">
+                            ${item.shipmentOwnerId ? `<div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
+                                <div><p class="text-xs text-red-400 mb-1"><i class="fas fa-box ml-1"></i>ID صاحب الشحنة</p><p class="text-white font-mono text-sm">${item.shipmentOwnerId}</p></div>
+                                <button onclick="copyText('${item.shipmentOwnerId.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs"><i class="fas fa-copy"></i></button>
+                            </div>` : ''}
+                            ${item.shipmentMonth ? `<div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
+                                <div><p class="text-xs text-red-400 mb-1"><i class="fas fa-calendar ml-1"></i>الشهر</p><p class="text-white font-mono text-sm">${item.shipmentMonth}</p></div>
+                            </div>` : ''}
+                            ${item.shipmentAmount ? `<div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
+                                <div><p class="text-xs text-red-400 mb-1"><i class="fas fa-dollar-sign ml-1"></i>القيمة</p><p class="text-white font-mono text-sm">${item.shipmentAmount}$</p></div>
+                            </div>` : ''}
+                        </div>` : ''}
                         ${item.note ? `<p class="text-sm text-slate-400 bg-slate-800/50 rounded-lg p-2 mt-2"><i class="fas fa-sticky-note ml-1 text-red-500"></i>${item.note}</p>` : ''}
                     </div>
-                    ${item.status === 'pending' ? `
-                        <div class="mr-4 flex flex-col gap-2">
-                            <button onclick="approveIdChange('${key}')" class="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm whitespace-nowrap">
-                                <i class="fas fa-check ml-1"></i>تم العمل
-                            </button>
-                            <button onclick="rejectIdChange('${key}')" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm whitespace-nowrap">
-                                <i class="fas fa-times ml-1"></i>رفض
-                            </button>
-                        </div>
-                    ` : ''}
+                    <div class="mr-4 flex flex-col gap-2">
+                        <button onclick="approveIdChange('${key}')" class="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm whitespace-nowrap"><i class="fas fa-check ml-1"></i>تم العمل</button>
+                        <button onclick="rejectIdChange('${key}')" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm whitespace-nowrap"><i class="fas fa-times ml-1"></i>رفض</button>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     });
 }
 
 function approveIdChange(key) {
     db.ref('idChanges/' + key).once('value').then(snap => {
-        const item = snap.val();
-        if (!item) return;
+        const item = snap.val(); if (!item) return;
         const archiveKey = db.ref('archive/idChanges').push().key;
-        db.ref('archive/idChanges/' + archiveKey).set({
-            ...item,
-            status: 'done',
-            doneAt: Date.now()
-        }).then(() => {
-            db.ref('idChanges/' + key).remove().then(() => {
-                showToast('✅ تم العمل وأرشفة الطلب');
-            });
+        db.ref('archive/idChanges/' + archiveKey).set({ ...item, status: 'done', doneAt: Date.now() }).then(() => {
+            db.ref('idChanges/' + key).remove().then(() => showToast('تم العمل وأرشفة الطلب'));
         });
     });
 }
 
 function rejectIdChange(key) {
     if (!confirm('هل أنت متأكد من رفض هذا الطلب؟')) return;
-    db.ref('idChanges/' + key).update({ status: 'rejected', rejectedAt: Date.now() }).then(() => {
-        showToast('تم رفض الطلب');
-    });
+    db.ref('idChanges/' + key).update({ status: 'rejected', rejectedAt: Date.now() }).then(() => showToast('تم رفض الطلب'));
 }
 
-// Welcome Ideas
 function loadWelcomes() {
     db.ref('welcomes').on('value', snap => {
         const welcomes = snap.val() || {};
         const container = document.getElementById('welcomesList');
         const list = Object.entries(welcomes).sort((a, b) => b[1].timestamp - a[1].timestamp);
-
-        if (list.length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد أيديهات ترحيب</p>';
-            return;
-        }
+        if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد أيديهات ترحيب</p>'; return; }
         container.innerHTML = list.map(([key, w]) => `
             <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         ${w.content ? `<p class="text-white font-medium">${w.content}</p>` : ''}
-                        ${w.ids && w.ids.length > 0 ? `
-                            <div class="flex flex-wrap gap-2 mt-3">
-                                ${w.ids.map(idObj => `
-                                    <span class="inline-flex items-center gap-2 bg-red-500/20 text-red-300 px-3 py-1.5 rounded-lg text-sm font-mono border border-red-500/30">
-                                        <span class="text-xs bg-red-600/40 px-1.5 py-0.5 rounded">${idObj.type}</span>
-                                        ${idObj.id}
-                                        <button onclick="copyText('${idObj.id.replace(/'/g, "\'")}')" class="text-red-400 hover:text-purple-200">
-                                            <i class="fas fa-copy text-xs"></i>
-                                        </button>
-                                    </span>
-                                `).join('')}
-                            </div>
-                        ` : ''}
+                        ${w.ids && w.ids.length > 0 ? `<div class="flex flex-wrap gap-2 mt-3">${w.ids.map(idObj => `
+                            <span class="inline-flex items-center gap-2 bg-red-500/20 text-red-300 px-3 py-1.5 rounded-lg text-sm font-mono border border-red-500/30">
+                                <span class="text-xs bg-red-600/40 px-1.5 py-0.5 rounded">${idObj.type}</span>${idObj.id}
+                                <button onclick="copyText('${idObj.id.replace(/'/g, "\\'")}')" class="text-red-400 hover:text-purple-200"><i class="fas fa-copy text-xs"></i></button>
+                            </span>`).join('')}</div>` : ''}
                         ${w.note ? `<p class="text-xs text-slate-500 mt-2"><i class="fas fa-sticky-note ml-1"></i>${w.note}</p>` : ''}
-                        <p class="text-xs text-slate-500 mt-2">من: ${w.adminName || 'أدمن'} · ${new Date(w.timestamp).toLocaleString('ar-EG')}</p>
+                        <p class="text-xs text-slate-500 mt-2">من: ${w.adminName || w.agentName || '—'} · ${new Date(w.timestamp).toLocaleString('ar-EG')}</p>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     });
 }
 
@@ -1250,93 +818,45 @@ function copyAllWelcomes() {
         const welcomes = snap.val() || {};
         const texts = Object.values(welcomes).map(w => w.content).filter(c => c).join('\n\n');
         if (!texts) return showToast('لا يوجد شيء للنسخ');
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(texts).then(() => showToast('تم نسخ جميع الأيديهات!'));
-        } else {
-            fallbackCopy(texts);
-        }
+        navigator.clipboard.writeText(texts).then(() => showToast('تم نسخ جميع الأيديهات!')).catch(() => fallbackCopy(texts));
     });
 }
 
-// Copy welcome IDs by selected filter
 function copyWelcomeIdsByFilter() {
     const filter = document.getElementById('copyIdFilter').value;
     db.ref('welcomes').once('value').then(snap => {
         const welcomes = snap.val() || {};
         const allIds = [];
-        Object.values(welcomes).forEach(w => {
-            if (w.ids && w.ids.length > 0) {
-                w.ids.forEach(idObj => {
-                    if (idObj.id) {
-                        if (filter === 'all' || idObj.type === filter) {
-                            allIds.push(idObj.id);
-                        }
-                    }
-                });
-            }
-        });
-        if (allIds.length === 0) return showToast('لا توجد IDs للنسخ في هذه الفئة');
+        Object.values(welcomes).forEach(w => { if (w.ids && w.ids.length > 0) { w.ids.forEach(idObj => { if (idObj.id && (filter === 'all' || idObj.type === filter)) allIds.push(idObj.id); }); } });
+        if (allIds.length === 0) return showToast('لا توجد IDs للنسخ');
         const idsText = allIds.join(',');
-        const filterLabel = filter === 'all' ? 'الجميع' : filter;
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(idsText).then(() => {
-                showToast('تم نسخ ' + allIds.length + ' ID (' + filterLabel + ')');
-            }).catch(() => {
-                fallbackCopy(idsText);
-            });
-        } else {
-            fallbackCopy(idsText);
-        }
+        navigator.clipboard.writeText(idsText).then(() => showToast('تم نسخ ' + allIds.length + ' ID')).catch(() => fallbackCopy(idsText));
     });
 }
 
 function fallbackCopy(text) {
     const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.left = '-9999px';
-    textarea.style.top = '0';
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    try {
-        document.execCommand('copy');
-        showToast('تم نسخ ' + text.split(',').length + ' ID');
-    } catch (err) {
-        showToast('فشل النسخ، يرجى المحاولة مرة أخرى');
-    }
+    textarea.value = text; textarea.style.position = 'fixed'; textarea.style.left = '-9999px'; document.body.appendChild(textarea);
+    textarea.focus(); textarea.select();
+    try { document.execCommand('copy'); showToast('تم النسخ!'); } catch (err) { showToast('فشل النسخ'); }
     document.body.removeChild(textarea);
 }
 
 function markWelcomesDone() {
-    if (!confirm('هل أنت متأكد من أرشفة جميع أيديهات الترحيب الحالية؟')) return;
+    if (!confirm('هل أنت متأكد من أرشفة جميع أيديهات الترحيب؟')) return;
     db.ref('welcomes').once('value').then(snap => {
         const welcomes = snap.val() || {};
-        if (Object.keys(welcomes).length === 0) {
-            showToast('لا توجد أيديهات للأرشفة');
-            return;
-        }
+        if (Object.keys(welcomes).length === 0) return showToast('لا توجد أيديهات للأرشفة');
         const archiveData = {};
-        Object.entries(welcomes).forEach(([key, val]) => {
-            const archiveKey = db.ref('archive/welcomes').push().key;
-            archiveData[archiveKey] = { ...val, archivedAt: Date.now() };
-        });
-        db.ref('archive/welcomes').update(archiveData).then(() => {
-            db.ref('welcomes').remove().then(() => {
-                showToast('تم أرشفة ' + Object.keys(welcomes).length + ' أيدية وبدء دورة جديدة');
-            });
-        });
+        Object.entries(welcomes).forEach(([key, val]) => { const archiveKey = db.ref('archive/welcomes').push().key; archiveData[archiveKey] = { ...val, archivedAt: Date.now() }; });
+        db.ref('archive/welcomes').update(archiveData).then(() => { db.ref('welcomes').remove().then(() => showToast('تم أرشفة ' + Object.keys(welcomes).length + ' أيدية')); });
     });
 }
 
-// Archive Functions
 function showArchiveTab(tabId) {
     document.querySelectorAll('.archive-tab').forEach(el => el.classList.add('hidden'));
     document.getElementById(tabId).classList.remove('hidden');
-    document.querySelectorAll('[id^="tab-archive-"]').forEach(btn => {
-        btn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
-    });
+    document.querySelectorAll('[id^="tab-archive-"]').forEach(btn => { btn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white'; });
     const activeBtn = document.getElementById('tab-' + tabId);
     if (activeBtn) activeBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white';
 }
@@ -1346,41 +866,23 @@ function loadArchiveReports() {
         const archive = snap.val() || {};
         const container = document.getElementById('archiveReportsList');
         const list = Object.entries(archive).sort((a, b) => (b[1].solvedAt || b[1].timestamp) - (a[1].solvedAt || a[1].timestamp));
-
-        if (list.length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف البلاغات فارغ</p>';
-            return;
-        }
+        if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف البلاغات فارغ</p>'; return; }
         container.innerHTML = list.map(([key, rep]) => `
             <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-2">
                             <span class="px-2 py-1 rounded-md text-xs font-bold status-solved">تم الحل</span>
-                            <span class="text-xs text-slate-400">من: ${rep.adminName || 'أدمن'}</span>
-                            <span class="text-xs text-slate-500">${new Date(rep.solvedAt || rep.timestamp).toLocaleString('ar-EG')}</span>
+                            <span class="text-xs text-slate-400">من: ${rep.adminName || rep.agentName || '—'}</span>
                         </div>
                         <p class="text-white font-medium mb-2">${rep.item || rep.content || 'بلاغ'}</p>
-                        ${rep.reportedId ? `
-                            <div class="bg-slate-800/50 rounded-lg p-2 flex items-center justify-between mb-2">
-                                <div>
-                                    <p class="text-xs text-slate-500">ID اللي عليه الشكوة</p>
-                                    <p class="text-white font-mono text-sm">${rep.reportedId}</p>
-                                </div>
-                                <button onclick="copyText('${rep.reportedId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                        ` : ''}
-                        ${rep.description ? `<p class="text-sm text-slate-400 bg-slate-800/50 rounded-lg p-2 mt-2"><i class="fas fa-align-left ml-1 text-yellow-500"></i>${rep.description}</p>` : ''}
-                        ${rep.note ? `<p class="text-sm text-slate-500 mt-1"><i class="fas fa-sticky-note ml-1"></i>${rep.note}</p>` : ''}
+                        ${rep.reportedId ? `<div class="bg-slate-800/50 rounded-lg p-2 flex items-center justify-between mb-2">
+                            <div><p class="text-xs text-slate-500">ID المتهم</p><p class="text-white font-mono text-sm">${rep.reportedId}</p></div>
+                        </div>` : ''}
                     </div>
-                    <button onclick="deleteArchiveReport('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button onclick="deleteArchiveReport('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     });
 }
 
@@ -1389,79 +891,23 @@ function loadArchiveIdChanges() {
         const archive = snap.val() || {};
         const container = document.getElementById('archiveIdChangesList');
         const list = Object.entries(archive).sort((a, b) => (b[1].doneAt || b[1].timestamp) - (a[1].doneAt || a[1].timestamp));
-
-        if (list.length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف تغيير ID فارغ</p>';
-            return;
-        }
+        if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف تغيير ID فارغ</p>'; return; }
         container.innerHTML = list.map(([key, item]) => `
             <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-3">
                             <span class="px-2 py-1 rounded-md text-xs font-bold status-solved">تم العمل</span>
-                            <span class="text-xs text-slate-400">من: ${item.adminName || 'أدمن'}</span>
-                            <span class="text-xs text-slate-500">${new Date(item.doneAt || item.timestamp).toLocaleString('ar-EG')}</span>
+                            <span class="text-xs text-slate-400">من: ${item.adminName || item.agentName || '—'}</span>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
-                            <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-slate-500 mb-1">الـ ID القديم</p>
-                                    <p class="text-white font-mono text-sm">${item.oldId}</p>
-                                </div>
-                                <button onclick="copyText('${item.oldId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                            <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-slate-500 mb-1">الـ ID المطلوب</p>
-                                    <p class="text-white font-mono text-sm">${item.newId}</p>
-                                </div>
-                                <button onclick="copyText('${item.newId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
+                            <div class="bg-slate-800/50 rounded-lg p-3"><p class="text-xs text-slate-500 mb-1">الـ ID القديم</p><p class="text-white font-mono text-sm">${item.oldId}</p></div>
+                            <div class="bg-slate-800/50 rounded-lg p-3"><p class="text-xs text-slate-500 mb-1">الـ ID المطلوب</p><p class="text-white font-mono text-sm">${item.newId}</p></div>
                         </div>
-                        ${item.shipmentOwnerId || item.shipmentMonth ? `
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2 mt-2">
-                            ${item.shipmentOwnerId ? `
-                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
-                                    <div>
-                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-box ml-1"></i>ID صاحب الشحنة</p>
-                                        <p class="text-white font-mono text-sm">${item.shipmentOwnerId}</p>
-                                    </div>
-                                    <button onclick="copyText('${item.shipmentOwnerId.replace(/'/g, "\'")}')" class="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </div>
-                            ` : ''}
-                            ${item.shipmentMonth ? `
-                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
-                                    <div>
-                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-calendar ml-1"></i>الشهر</p>
-                                        <p class="text-white font-mono text-sm">${item.shipmentMonth}</p>
-                                    </div>
-                                </div>
-                            ` : ''}
-                            ${item.shipmentAmount ? `
-                                <div class="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between border border-red-500/20">
-                                    <div>
-                                        <p class="text-xs text-red-400 mb-1"><i class="fas fa-dollar-sign ml-1"></i>قيمة الشحنة</p>
-                                        <p class="text-white font-mono text-sm">${item.shipmentAmount}$</p>
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
-                        ` : ''}
-                        ${item.note ? `<p class="text-sm text-slate-400 bg-slate-800/50 rounded-lg p-2 mt-2"><i class="fas fa-sticky-note ml-1 text-red-500"></i>${item.note}</p>` : ''}
                     </div>
-                    <button onclick="deleteArchiveIdChange('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button onclick="deleteArchiveIdChange('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     });
 }
 
@@ -1470,83 +916,36 @@ function loadArchiveWelcomes() {
         const archive = snap.val() || {};
         const container = document.getElementById('archiveWelcomesList');
         const list = Object.entries(archive).sort((a, b) => b[1].archivedAt - a[1].archivedAt);
-
-        if (list.length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف الترحيبات فارغ</p>';
-            return;
-        }
+        if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف الترحيبات فارغ</p>'; return; }
         container.innerHTML = list.map(([key, w]) => `
             <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         ${w.content ? `<p class="text-white font-medium">${w.content}</p>` : ''}
-                        ${w.ids && w.ids.length > 0 ? `
-                            <div class="flex flex-wrap gap-2 mt-3">
-                                ${w.ids.map(idObj => `
-                                    <span class="inline-flex items-center gap-2 bg-red-500/20 text-red-300 px-3 py-1.5 rounded-lg text-sm font-mono border border-red-500/30">
-                                        <span class="text-xs bg-red-600/40 px-1.5 py-0.5 rounded">${idObj.type}</span>
-                                        ${idObj.id}
-                                        <button onclick="copyText('${idObj.id.replace(/'/g, "\'")}')" class="text-red-400 hover:text-purple-200">
-                                            <i class="fas fa-copy text-xs"></i>
-                                        </button>
-                                    </span>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                        ${w.note ? `<p class="text-xs text-slate-500 mt-2"><i class="fas fa-sticky-note ml-1"></i>${w.note}</p>` : ''}
-                        <p class="text-xs text-slate-500 mt-2">
-                            من: ${w.adminName || 'أدمن'} · 
-                            أرشف: ${new Date(w.archivedAt).toLocaleString('ar-EG')}
-                        </p>
+                        ${w.ids && w.ids.length > 0 ? `<div class="flex flex-wrap gap-2 mt-3">${w.ids.map(idObj => `
+                            <span class="inline-flex items-center gap-2 bg-red-500/20 text-red-300 px-3 py-1.5 rounded-lg text-sm font-mono border border-red-500/30">
+                                <span class="text-xs bg-red-600/40 px-1.5 py-0.5 rounded">${idObj.type}</span>${idObj.id}
+                            </span>`).join('')}</div>` : ''}
+                        <p class="text-xs text-slate-500 mt-2">من: ${w.adminName || w.agentName || '—'} · أرشف: ${new Date(w.archivedAt).toLocaleString('ar-EG')}</p>
                     </div>
-                    <button onclick="deleteArchiveWelcome('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button onclick="deleteArchiveWelcome('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     });
 }
 
-function deleteArchiveReport(key) {
-    if (!confirm('هل أنت متأكد من حذف هذا البلاغ من الأرشيف؟')) return;
-    db.ref('archive/reports/' + key).remove().then(() => showToast('تم الحذف من الأرشيف'));
-}
-
-function deleteArchiveIdChange(key) {
-    if (!confirm('هل أنت متأكد من حذف هذا الطلب من الأرشيف؟')) return;
-    db.ref('archive/idChanges/' + key).remove().then(() => showToast('تم الحذف من الأرشيف'));
-}
-
-function deleteArchiveWelcome(key) {
-    if (!confirm('هل أنت متأكد من حذف هذه الأيدية من الأرشيف؟')) return;
-    db.ref('archive/welcomes/' + key).remove().then(() => showToast('تم الحذف من الأرشيف'));
-}
-
-function clearArchiveReports() {
-    if (!confirm('هل أنت متأكد من مسح أرشيف البلاغات بالكامل؟ لا يمكن التراجع!')) return;
-    db.ref('archive/reports').remove().then(() => showToast('تم مسح أرشيف البلاغات'));
-}
-
-function clearArchiveIdChanges() {
-    if (!confirm('هل أنت متأكد من مسح أرشيف تغيير ID بالكامل؟ لا يمكن التراجع!')) return;
-    db.ref('archive/idChanges').remove().then(() => showToast('تم مسح أرشيف تغيير ID'));
-}
-
-function clearArchiveWelcomes() {
-    if (!confirm('هل أنت متأكد من مسح أرشيف الترحيبات بالكامل؟ لا يمكن التراجع!')) return;
-    db.ref('archive/welcomes').remove().then(() => showToast('تم مسح أرشيف الترحيبات'));
-}
+function deleteArchiveReport(key) { if (!confirm('هل أنت متأكد؟')) return; db.ref('archive/reports/' + key).remove().then(() => showToast('تم الحذف')); }
+function deleteArchiveIdChange(key) { if (!confirm('هل أنت متأكد؟')) return; db.ref('archive/idChanges/' + key).remove().then(() => showToast('تم الحذف')); }
+function deleteArchiveWelcome(key) { if (!confirm('هل أنت متأكد؟')) return; db.ref('archive/welcomes/' + key).remove().then(() => showToast('تم الحذف')); }
+function clearArchiveReports() { if (!confirm('هل أنت متأكد؟')) return; db.ref('archive/reports').remove().then(() => showToast('تم المسح')); }
+function clearArchiveIdChanges() { if (!confirm('هل أنت متأكد؟')) return; db.ref('archive/idChanges').remove().then(() => showToast('تم المسح')); }
+function clearArchiveWelcomes() { if (!confirm('هل أنت متأكد؟')) return; db.ref('archive/welcomes').remove().then(() => showToast('تم المسح')); }
 
 function copyText(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => showToast('تم النسخ!')).catch(() => fallbackCopy(text));
-    } else {
-        fallbackCopy(text);
-    }
+    navigator.clipboard.writeText(text).then(() => showToast('تم النسخ!')).catch(() => fallbackCopy(text));
 }
 
-// Admin Dashboard
+// ========== ADMIN DASHBOARD ==========
 function showAdminDashboard() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminDashboard').classList.remove('hidden');
@@ -1586,9 +985,7 @@ function selectSection(key) {
     db.ref('sections/' + key).once('value').then(snap => {
         selectedSectionData = snap.val();
         document.getElementById('reportFormContainer').classList.remove('hidden');
-        document.getElementById('selectedSectionTitle').innerHTML = `
-            <i class="fas fa-edit text-red-400"></i>إرسال بلاغ لقسم: ${selectedSectionData.name}
-        `;
+        document.getElementById('selectedSectionTitle').innerHTML = `<i class="fas fa-edit text-red-400"></i>إرسال بلاغ لقسم: ${selectedSectionData.name}`;
         const itemsContainer = document.getElementById('sectionItems');
         if (selectedSectionData.items && selectedSectionData.items.length > 0) {
             itemsContainer.innerHTML = `
@@ -1600,53 +997,39 @@ function selectSection(key) {
                             <span class="text-sm text-slate-300">${item}</span>
                         </label>
                     `).join('')}
-                </div>
-            `;
+                </div>`;
         } else {
-            itemsContainer.innerHTML = '<p class="text-sm text-slate-500">لا توجد نقاط محددة مسبقاً في هذا القسم</p>';
+            itemsContainer.innerHTML = '<p class="text-sm text-slate-500">لا توجد نقاط محددة مسبقاً</p>';
         }
         document.getElementById('customReport').value = '';
-        document.getElementById('reportNote').value = '';
+        document.getElementById('reportedId').value = '';
     });
 }
 
 function submitReport() {
     if (!selectedSectionId) return showToast('يرجى اختيار قسم أولاً');
-
     const checkedItems = Array.from(document.querySelectorAll('input[name="sectionItem"]:checked')).map(cb => cb.value);
     const custom = document.getElementById('customReport').value.trim();
     const reportedId = document.getElementById('reportedId').value.trim();
-
     if (checkedItems.length === 0 && !custom) return showToast('يرجى اختيار بلاغ أو كتابة بلاغ جديد');
-    if (!reportedId) return showToast('يرجى ملء خانة الـ ID');
+    if (!reportedId) return showToast('يرجى ملء خانة ID المتهم');
 
     const timestamp = Date.now();
-
     const promises = [];
     checkedItems.forEach(item => {
         const key = db.ref('reports').push().key;
         promises.push(db.ref('reports/' + key).set({
-            adminId: currentUser.id,
-            adminName: currentUser.name,
-            sectionId: selectedSectionId,
-            sectionName: selectedSectionData.name,
-            item,
-            reportedId,
-            status: 'pending',
-            timestamp
+            adminId: currentUser.id, adminName: currentUser.name,
+            sectionId: selectedSectionId, sectionName: selectedSectionData.name,
+            item, reportedId, status: 'pending', timestamp
         }));
     });
     if (custom) {
         const key = db.ref('reports').push().key;
         promises.push(db.ref('reports/' + key).set({
-            adminId: currentUser.id,
-            adminName: currentUser.name,
-            sectionId: selectedSectionId,
-            sectionName: selectedSectionData.name,
-            content: custom,
-            reportedId,
-            status: 'pending',
-            timestamp
+            adminId: currentUser.id, adminName: currentUser.name,
+            sectionId: selectedSectionId, sectionName: selectedSectionData.name,
+            content: custom, reportedId, status: 'pending', timestamp
         }));
     }
     Promise.all(promises).then(() => {
@@ -1658,7 +1041,6 @@ function submitReport() {
     });
 }
 
-// Admin Welcome - Dynamic ID + Type Fields
 function addWelcomeIdField() {
     const container = document.getElementById('welcomeIdFields');
     const div = document.createElement('div');
@@ -1666,59 +1048,38 @@ function addWelcomeIdField() {
     div.innerHTML = `
         <input type="text" class="welcome-id-input flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-red-500" placeholder="أدخل الـ ID">
         <select class="welcome-type-select bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-red-500 text-sm">
-            <option value="وكيل">وكيل</option>
-            <option value="داعم">داعم</option>
-            <option value="مضيف">مضيف</option>
+            <option value="وكيل">وكيل</option><option value="داعم">داعم</option><option value="مضيف">مضيف</option>
         </select>
-        <button onclick="this.parentElement.remove()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
-            <i class="fas fa-trash"></i>
-        </button>
-    `;
+        <button onclick="this.parentElement.remove()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>`;
     container.appendChild(div);
 }
 
 function submitWelcome() {
-    // Collect all IDs with types
     const idGroups = document.querySelectorAll('#welcomeIdFields .id-input-group');
     const ids = [];
     idGroups.forEach(group => {
-        const idInput = group.querySelector('.welcome-id-input');
-        const typeSelect = group.querySelector('.welcome-type-select');
-        const idVal = idInput.value.trim();
-        const typeVal = typeSelect.value;
-        if (idVal) {
-            ids.push({ id: idVal, type: typeVal });
-        }
+        const idVal = group.querySelector('.welcome-id-input').value.trim();
+        const typeVal = group.querySelector('.welcome-type-select').value;
+        if (idVal) ids.push({ id: idVal, type: typeVal });
     });
-
     if (ids.length === 0) return showToast('يرجى إدخال ID واحد على الأقل');
-
     const key = db.ref('welcomes').push().key;
     db.ref('welcomes/' + key).set({
-        adminId: currentUser.id,
-        adminName: currentUser.name,
-        content: '',
-        note: '',
-        ids: ids,
-        timestamp: Date.now()
+        adminId: currentUser.id, adminName: currentUser.name,
+        content: '', note: '', ids: ids, timestamp: Date.now()
     }).then(() => {
         showToast('تم إرسال أيديهات الترحيب بنجاح');
         notifyNewWelcome(currentUser.name, ids);
-        // Reset ID fields to one empty
         document.getElementById('welcomeIdFields').innerHTML = `
             <div class="id-input-group flex gap-2 items-center">
                 <input type="text" class="welcome-id-input flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-red-500" placeholder="أدخل الـ ID">
                 <select class="welcome-type-select bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-red-500 text-sm">
-                    <option value="وكيل">وكيل</option>
-                    <option value="داعم">داعم</option>
-                    <option value="مضيف">مضيف</option>
+                    <option value="وكيل">وكيل</option><option value="داعم">داعم</option><option value="مضيف">مضيف</option>
                 </select>
-            </div>
-        `;
+            </div>`;
     });
 }
 
-// Admin ID Change Submit
 function submitIdChange() {
     const oldId = document.getElementById('oldId').value.trim();
     const newId = document.getElementById('newId').value.trim();
@@ -1726,13 +1087,11 @@ function submitIdChange() {
     const shipmentOwnerId = document.getElementById('shipmentOwnerId').value.trim();
     const shipmentMonth = document.getElementById('shipmentMonth').value;
     const shipmentAmount = document.getElementById('shipmentAmount').value;
-
-    if (!oldId || !newId) return showToast('يرجى ملء خانة الـ ID القديم والمطلوب');
+    if (!oldId || !newId) return showToast('يرجى ملء الـ ID القديم والمطلوب');
     if (!shipmentOwnerId) return showToast('يرجى إدخال ID صاحب الشحنة');
     if (!shipmentMonth) return showToast('يرجى اختيار الشهر');
     if (!shipmentAmount) return showToast('يرجى اختيار قيمة الشحنة');
 
-    // Check for duplicate shipmentOwnerId + month + amount across all idChanges
     db.ref('idChanges').once('value').then(snap => {
         const idChanges = snap.val() || {};
         const duplicate = Object.values(idChanges).find(item => 
@@ -1740,24 +1099,15 @@ function submitIdChange() {
             String(item.shipmentMonth) === String(shipmentMonth) &&
             String(item.shipmentAmount) === String(shipmentAmount)
         );
-
         if (duplicate) {
-            showToast('⚠️ هذا الطلب مسجل مسبقاً لنفس صاحب الشحنة والشهر وقيمة الشحنة ' + shipmentAmount + '$ من قبل ' + (duplicate.adminName || 'أدمن'));
+            showToast('⚠️ هذا الطلب مسجل مسبقاً من قبل ' + (duplicate.adminName || duplicate.agentName || '—'));
             return;
         }
-
         const key = db.ref('idChanges').push().key;
         db.ref('idChanges/' + key).set({
-            adminId: currentUser.id,
-            adminName: currentUser.name,
-            oldId,
-            newId,
-            note,
-            shipmentOwnerId,
-            shipmentMonth,
-            shipmentAmount,
-            status: 'pending',
-            timestamp: Date.now()
+            adminId: currentUser.id, adminName: currentUser.name,
+            oldId, newId, note, shipmentOwnerId, shipmentMonth, shipmentAmount,
+            status: 'pending', timestamp: Date.now()
         }).then(() => {
             showToast('تم إرسال طلب تغيير الـ ID بنجاح');
             notifyNewIdChange(currentUser.name, oldId, newId, shipmentOwnerId, shipmentMonth, shipmentAmount);
@@ -1775,66 +1125,35 @@ function loadMyReports() {
     db.ref('reports').on('value', snap => {
         const reports = snap.val() || {};
         const container = document.getElementById('myReportsList');
-        const myReports = Object.entries(reports)
-            .filter(([k, r]) => r.adminId === currentUser.id)
-            .sort((a, b) => b[1].timestamp - a[1].timestamp);
-
+        const myReports = Object.entries(reports).filter(([k, r]) => r.adminId === currentUser.id).sort((a, b) => b[1].timestamp - a[1].timestamp);
         db.ref('idChanges').once('value').then(snap2 => {
             const idChanges = snap2.val() || {};
-            const myIdChanges = Object.entries(idChanges)
-                .filter(([k, r]) => r.adminId === currentUser.id)
-                .sort((a, b) => b[1].timestamp - a[1].timestamp);
-
+            const myIdChanges = Object.entries(idChanges).filter(([k, r]) => r.adminId === currentUser.id).sort((a, b) => b[1].timestamp - a[1].timestamp);
             const allItems = [...myReports.map(([k, r]) => ({...r, _key: k, _type: 'report'})),
-                              ...myIdChanges.map(([k, r]) => ({...r, _key: k, _type: 'idchange'}))]
-                              .sort((a, b) => b.timestamp - a.timestamp);
-
+                              ...myIdChanges.map(([k, r]) => ({...r, _key: k, _type: 'idchange'}))].sort((a, b) => b.timestamp - a.timestamp);
             if (allItems.length === 0) {
                 container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد بلاغات سابقة</p>';
                 return;
             }
-
             container.innerHTML = allItems.map(item => {
                 if (item._type === 'report') {
-                    return `
-                    <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                    return `<div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 rounded-md text-xs font-bold ${item.status === 'solved' ? 'status-solved' : 'status-pending'}">
-                                ${item.status === 'solved' ? 'تم الحل' : 'قيد المعالجة'}
-                            </span>
+                            <span class="px-2 py-1 rounded-md text-xs font-bold ${item.status === 'solved' ? 'status-solved' : 'status-pending'}">${item.status === 'solved' ? 'تم الحل' : 'قيد المعالجة'}</span>
                             <span class="text-xs text-slate-400">${item.sectionName || 'قسم'}</span>
-                            <span class="text-xs text-slate-500">بلاغ</span>
                         </div>
                         <p class="text-white text-sm mb-1">${item.item || item.content || 'بلاغ'}</p>
-                        <div class="flex gap-3 mb-1">
-                            ${item.reporterId ? `<p class="text-xs text-slate-400">صاحب الشكوى: <span class="text-white font-mono">${item.reporterId}</span></p>` : ''}
-                            ${item.reportedId ? `<p class="text-xs text-slate-400">المتهم: <span class="text-white font-mono">${item.reportedId}</span></p>` : ''}
-                        </div>
-                        ${item.description ? `<p class="text-xs text-slate-500 mb-1"><i class="fas fa-align-left ml-1"></i>${item.description}</p>` : ''}
-                        ${item.note ? `<p class="text-xs text-slate-500"><i class="fas fa-sticky-note ml-1"></i>${item.note}</p>` : ''}
+                        ${item.reportedId ? `<p class="text-xs text-slate-400">المتهم: <span class="text-white font-mono">${item.reportedId}</span></p>` : ''}
                         <p class="text-xs text-slate-600 mt-2">${new Date(item.timestamp).toLocaleString('ar-EG')}</p>
                     </div>`;
                 } else {
-                    return `
-                    <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                    return `<div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 rounded-md text-xs font-bold ${
-                                item.status === 'done' ? 'status-solved' : 
-                                item.status === 'rejected' ? 'status-rejected' : 'status-pending'
-                            }">
-                                ${item.status === 'done' ? 'تم العمل' : item.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
-                            </span>
+                            <span class="px-2 py-1 rounded-md text-xs font-bold ${item.status === 'done' ? 'status-solved' : item.status === 'rejected' ? 'status-rejected' : 'status-pending'}">${item.status === 'done' ? 'تم العمل' : item.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}</span>
                             <span class="text-xs text-slate-500">تغيير ID</span>
                         </div>
-                        <div class="flex gap-4 mb-1">
-                            <p class="text-sm text-slate-400">من: <span class="text-white font-mono">${item.oldId}</span></p>
-                            <p class="text-sm text-slate-400">إلى: <span class="text-white font-mono">${item.newId}</span></p>
-                        </div>
-                        <div class="flex gap-3 mb-1">
-                            ${item.shipmentOwnerId ? `<p class="text-xs text-red-400"><i class="fas fa-box ml-1"></i>صاحب الشحنة: <span class="text-white font-mono">${item.shipmentOwnerId}</span></p>` : ''}
-                            ${item.shipmentMonth ? `<p class="text-xs text-red-400"><i class="fas fa-calendar ml-1"></i>الشهر: <span class="text-white font-mono">${item.shipmentMonth}</span></p>` : ''}
-                            ${item.shipmentAmount ? `<p class="text-xs text-red-400"><i class="fas fa-dollar-sign ml-1"></i>القيمة: <span class="text-white font-mono">${item.shipmentAmount}$</span></p>` : ''}
-                        </div>
+                        <div class="flex gap-4 mb-1"><p class="text-sm text-slate-400">من: <span class="text-white font-mono">${item.oldId}</span></p><p class="text-sm text-slate-400">إلى: <span class="text-white font-mono">${item.newId}</span></p></div>
+                        ${item.shipmentOwnerId ? `<p class="text-xs text-red-400"><i class="fas fa-box ml-1"></i>صاحب الشحنة: <span class="text-white font-mono">${item.shipmentOwnerId}</span></p>` : ''}
                         ${item.note ? `<p class="text-xs text-slate-500"><i class="fas fa-sticky-note ml-1"></i>${item.note}</p>` : ''}
                         <p class="text-xs text-slate-600 mt-2">${new Date(item.timestamp).toLocaleString('ar-EG')}</p>
                     </div>`;
@@ -1844,7 +1163,161 @@ function loadMyReports() {
     });
 }
 
-// Toast
+// ========== AGENT DASHBOARD ==========
+function showAgentDashboard() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('agentDashboard').classList.remove('hidden');
+    document.getElementById('agentDisplayName').textContent = 'مرحباً، ' + currentUser.name;
+    showAgentSection('agent-submit');
+    loadAgentMyReports();
+}
+
+function showAgentSection(id) {
+    document.querySelectorAll('.agent-section').forEach(el => el.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+}
+
+function submitAgentReport() {
+    const content = document.getElementById('agentReportContent').value.trim();
+    const reportedId = document.getElementById('agentReportedId').value.trim();
+    if (!content) return showToast('يرجى كتابة البلاغ');
+    if (!reportedId) return showToast('يرجى ملء ID المتهم');
+    const key = db.ref('reports').push().key;
+    db.ref('reports/' + key).set({
+        agentId: currentUser.id, agentName: currentUser.name,
+        content: content, reportedId: reportedId,
+        status: 'pending', timestamp: Date.now()
+    }).then(() => {
+        showToast('تم إرسال البلاغ بنجاح');
+        notifyNewReport(currentUser.name, 'بلاغ مباشر من وكيل', [content], reportedId);
+        document.getElementById('agentReportContent').value = '';
+        document.getElementById('agentReportedId').value = '';
+    });
+}
+
+function addAgentWelcomeIdField() {
+    const container = document.getElementById('agentWelcomeIdFields');
+    const div = document.createElement('div');
+    div.className = 'id-input-group flex gap-2 items-center';
+    div.innerHTML = `
+        <input type="text" class="agent-welcome-id-input flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل الـ ID">
+        <select class="agent-welcome-type-select bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-orange-500 text-sm">
+            <option value="وكيل">وكيل</option><option value="داعم">داعم</option><option value="مضيف">مضيف</option>
+        </select>
+        <button onclick="this.parentElement.remove()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>`;
+    container.appendChild(div);
+}
+
+function submitAgentWelcome() {
+    const idGroups = document.querySelectorAll('#agentWelcomeIdFields .id-input-group');
+    const ids = [];
+    idGroups.forEach(group => {
+        const idVal = group.querySelector('.agent-welcome-id-input').value.trim();
+        const typeVal = group.querySelector('.agent-welcome-type-select').value;
+        if (idVal) ids.push({ id: idVal, type: typeVal });
+    });
+    if (ids.length === 0) return showToast('يرجى إدخال ID واحد على الأقل');
+    const key = db.ref('welcomes').push().key;
+    db.ref('welcomes/' + key).set({
+        agentId: currentUser.id, agentName: currentUser.name,
+        content: '', note: '', ids: ids, timestamp: Date.now()
+    }).then(() => {
+        showToast('تم إرسال أيديهات الترحيب بنجاح');
+        notifyNewWelcome(currentUser.name, ids);
+        document.getElementById('agentWelcomeIdFields').innerHTML = `
+            <div class="id-input-group flex gap-2 items-center">
+                <input type="text" class="agent-welcome-id-input flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل الـ ID">
+                <select class="agent-welcome-type-select bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-orange-500 text-sm">
+                    <option value="وكيل">وكيل</option><option value="داعم">داعم</option><option value="مضيف">مضيف</option>
+                </select>
+            </div>`;
+    });
+}
+
+function submitAgentIdChange() {
+    const oldId = document.getElementById('agentOldId').value.trim();
+    const newId = document.getElementById('agentNewId').value.trim();
+    const note = document.getElementById('agentIdChangeNote').value.trim();
+    const shipmentOwnerId = document.getElementById('agentShipmentOwnerId').value.trim();
+    const shipmentMonth = document.getElementById('agentShipmentMonth').value;
+    const shipmentAmount = document.getElementById('agentShipmentAmount').value;
+    if (!oldId || !newId) return showToast('يرجى ملء الـ ID القديم والمطلوب');
+    if (!shipmentOwnerId) return showToast('يرجى إدخال ID صاحب الشحنة');
+    if (!shipmentMonth) return showToast('يرجى اختيار الشهر');
+    if (!shipmentAmount) return showToast('يرجى اختيار قيمة الشحنة');
+
+    db.ref('idChanges').once('value').then(snap => {
+        const idChanges = snap.val() || {};
+        const duplicate = Object.values(idChanges).find(item => 
+            item.shipmentOwnerId === shipmentOwnerId && 
+            String(item.shipmentMonth) === String(shipmentMonth) &&
+            String(item.shipmentAmount) === String(shipmentAmount)
+        );
+        if (duplicate) {
+            showToast('⚠️ هذا الطلب مسجل مسبقاً من قبل ' + (duplicate.adminName || duplicate.agentName || '—'));
+            return;
+        }
+        const key = db.ref('idChanges').push().key;
+        db.ref('idChanges/' + key).set({
+            agentId: currentUser.id, agentName: currentUser.name,
+            oldId, newId, note, shipmentOwnerId, shipmentMonth, shipmentAmount,
+            status: 'pending', timestamp: Date.now()
+        }).then(() => {
+            showToast('تم إرسال طلب تغيير الـ ID بنجاح');
+            notifyNewIdChange(currentUser.name, oldId, newId, shipmentOwnerId, shipmentMonth, shipmentAmount);
+            document.getElementById('agentOldId').value = '';
+            document.getElementById('agentNewId').value = '';
+            document.getElementById('agentIdChangeNote').value = '';
+            document.getElementById('agentShipmentOwnerId').value = '';
+            document.getElementById('agentShipmentMonth').value = '';
+            document.getElementById('agentShipmentAmount').value = '';
+        });
+    });
+}
+
+function loadAgentMyReports() {
+    db.ref('reports').on('value', snap => {
+        const reports = snap.val() || {};
+        const container = document.getElementById('agentMyReportsList');
+        const myReports = Object.entries(reports).filter(([k, r]) => r.agentId === currentUser.id).sort((a, b) => b[1].timestamp - a[1].timestamp);
+        db.ref('idChanges').once('value').then(snap2 => {
+            const idChanges = snap2.val() || {};
+            const myIdChanges = Object.entries(idChanges).filter(([k, r]) => r.agentId === currentUser.id).sort((a, b) => b[1].timestamp - a[1].timestamp);
+            const allItems = [...myReports.map(([k, r]) => ({...r, _key: k, _type: 'report'})),
+                              ...myIdChanges.map(([k, r]) => ({...r, _key: k, _type: 'idchange'}))].sort((a, b) => b.timestamp - a.timestamp);
+            if (allItems.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد بلاغات سابقة</p>';
+                return;
+            }
+            container.innerHTML = allItems.map(item => {
+                if (item._type === 'report') {
+                    return `<div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-2 py-1 rounded-md text-xs font-bold ${item.status === 'solved' ? 'status-solved' : 'status-pending'}">${item.status === 'solved' ? 'تم الحل' : 'قيد المعالجة'}</span>
+                            <span class="text-xs text-slate-400">بلاغ مباشر</span>
+                        </div>
+                        <p class="text-white text-sm mb-1">${item.content || 'بلاغ'}</p>
+                        ${item.reportedId ? `<p class="text-xs text-slate-400">المتهم: <span class="text-white font-mono">${item.reportedId}</span></p>` : ''}
+                        <p class="text-xs text-slate-600 mt-2">${new Date(item.timestamp).toLocaleString('ar-EG')}</p>
+                    </div>`;
+                } else {
+                    return `<div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-2 py-1 rounded-md text-xs font-bold ${item.status === 'done' ? 'status-solved' : item.status === 'rejected' ? 'status-rejected' : 'status-pending'}">${item.status === 'done' ? 'تم العمل' : item.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}</span>
+                            <span class="text-xs text-slate-500">تغيير ID</span>
+                        </div>
+                        <div class="flex gap-4 mb-1"><p class="text-sm text-slate-400">من: <span class="text-white font-mono">${item.oldId}</span></p><p class="text-sm text-slate-400">إلى: <span class="text-white font-mono">${item.newId}</span></p></div>
+                        ${item.shipmentOwnerId ? `<p class="text-xs text-red-400"><i class="fas fa-box ml-1"></i>صاحب الشحنة: <span class="text-white font-mono">${item.shipmentOwnerId}</span></p>` : ''}
+                        ${item.note ? `<p class="text-xs text-slate-500"><i class="fas fa-sticky-note ml-1"></i>${item.note}</p>` : ''}
+                        <p class="text-xs text-slate-600 mt-2">${new Date(item.timestamp).toLocaleString('ar-EG')}</p>
+                    </div>`;
+                }
+            }).join('');
+        });
+    });
+}
+
+// ========== UTILITIES ==========
 function showToast(msg) {
     const existing = document.querySelector('.toast');
     if (existing) existing.remove();
@@ -1871,125 +1344,69 @@ function toggleStatsAccordion() {
 
 function clearAllData() {
     const confirmText = document.getElementById('confirmDeleteText').value.trim();
-    if (confirmText !== 'DELETE') {
-        showToast('يرجى كتابة DELETE بالحروف الكبيرة للتأكيد');
-        return;
-    }
-    if (!confirm('⚠️ تحذير نهائي: هل أنت متأكد تماماً من مسح جميع البيانات؟ لا يمكن التراجع أبداً!')) return;
-
+    if (confirmText !== 'DELETE') return showToast('يرجى كتابة DELETE للتأكيد');
+    if (!confirm('⚠️ تحذير نهائي: هل أنت متأكد؟ لا يمكن التراجع!')) return;
     showToast('⏳ جاري مسح البيانات...');
-
-    // Delete all data except admins, sections and manager
-    const deletes = [];
-    deletes.push(db.ref('reports').remove());
-    deletes.push(db.ref('idChanges').remove());
-    deletes.push(db.ref('welcomes').remove());
-    deletes.push(db.ref('archive/reports').remove());
-    deletes.push(db.ref('archive/idChanges').remove());
-    deletes.push(db.ref('archive/welcomes').remove());
-
-    Promise.all(deletes).then(() => {
-        showToast('✅ تم مسح جميع البيانات بنجاح!');
+    Promise.all([
+        db.ref('reports').remove(), db.ref('idChanges').remove(), db.ref('welcomes').remove(),
+        db.ref('archive/reports').remove(), db.ref('archive/idChanges').remove(), db.ref('archive/welcomes').remove()
+    ]).then(() => {
+        showToast('✅ تم مسح جميع البيانات!');
         document.getElementById('confirmDeleteText').value = '';
-        // Reload stats
-        loadManagerStats();
-        loadAdmins();
-        loadSectionsManager();
-        loadProblems();
-        loadIdChanges();
-        loadWelcomes();
-        loadArchiveReports();
-        loadArchiveIdChanges();
-        loadArchiveWelcomes();
-    }).catch(err => {
-        showToast('❌ حدث خطأ أثناء المسح: ' + err.message);
-    });
+    }).catch(err => showToast('❌ خطأ: ' + err.message));
 }
 
-// Telegram Notification System
-let telegramSettings = { token: '', chatId: '' };
+// ========== TELEGRAM ==========
+const telegramSettings = { token: '8464412667:AAEzfUIj9X6u2deXJxFOC-KDDzaE4m9SZiQ', chatId: '1713783294' };
 
 function loadTelegramSettings() {
-    db.ref('settings/telegram').on('value', snap => {
-        const data = snap.val() || {};
-        telegramSettings.token = data.token || '';
-        telegramSettings.chatId = data.chatId || '';
-        document.getElementById('telegramBotToken').value = telegramSettings.token;
-        document.getElementById('telegramChatId').value = telegramSettings.chatId;
-    });
+    // الإعدادات ثابتة في الكود - لا حاجة لقاعدة البيانات
+    document.getElementById('telegramBotToken').value = telegramSettings.token;
+    document.getElementById('telegramChatId').value = telegramSettings.chatId;
 }
 
 function saveTelegramSettings() {
-    const token = document.getElementById('telegramBotToken').value.trim();
-    const chatId = document.getElementById('telegramChatId').value.trim();
-    if (!token || !chatId) return showToast('يرجى ملء التوكن والـ Chat ID');
-    db.ref('settings/telegram').set({ token, chatId, updatedAt: Date.now() }).then(() => {
-        telegramSettings = { token, chatId };
-        showToast('✅ تم حفظ إعدادات التلجرام');
-    });
+    showToast('ℹ️ الإعدادات ثابتة في الكود ولا يمكن تعديلها من هنا');
 }
 
 function testTelegramConnection() {
-    if (!telegramSettings.token || !telegramSettings.chatId) {
-        showToast('⚠️ يرجى حفظ الإعدادات أولاً');
-        return;
-    }
-    const msg = '📡 <b>اختبار اتصال</b>\n\n✅ إعدادات التلجرام شغالة تمام!\n🤖 Niu Chat Admin Panel';
+    if (!telegramSettings.token || !telegramSettings.chatId) return showToast('⚠️ احفظ الإعدادات أولاً');
+    const msg = '📡 <b>اختبار اتصال</b>\n\n✅ إعدادات التلجرام شغالة!\n🤖 Niu Chat';
     sendTelegramMessage(msg).then(ok => {
-        if (ok) showToast('✅ تم إرسال رسالة الاختبار بنجاح');
-        else showToast('❌ فشل الإرسال، تأكد من التوكن والـ Chat ID');
+        if (ok) showToast('✅ تم إرسال رسالة الاختبار');
+        else showToast('❌ فشل الإرسال');
     });
 }
 
 function sendTelegramMessage(message) {
     return new Promise((resolve) => {
-        if (!telegramSettings.token || !telegramSettings.chatId) {
-            console.log('Telegram not configured');
-            resolve(false);
-            return;
-        }
+        // الإعدادات ثابتة في الكود - الإشعارات إلزامية
         const url = `https://api.telegram.org/bot${telegramSettings.token}/sendMessage`;
-        const body = {
-            chat_id: telegramSettings.chatId,
-            text: message,
-            parse_mode: 'HTML',
-            disable_web_page_preview: true
-        };
         fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.ok) resolve(true);
-            else { console.error('Telegram error:', data); resolve(false); }
-        })
-        .catch(err => { console.error('Telegram fetch error:', err); resolve(false); });
+            body: JSON.stringify({ chat_id: telegramSettings.chatId, text: message, parse_mode: 'HTML', disable_web_page_preview: true })
+        }).then(res => res.json()).then(data => resolve(data.ok || false)).catch(() => resolve(false));
     });
 }
 
-function notifyNewReport(adminName, sectionName, items, reportedId) {
-    let itemsText = '';
-    if (items && items.length > 0) {
-        itemsText = '\n📋 <b>البلاغات:</b>\n' + items.map(i => `• ${i}`).join('\n');
-    }
-    const msg = `🚨 <b>بلاغ جديد وارد!</b>\n\n👤 <b>الأدمن:</b> ${adminName}\n📁 <b>القسم:</b> ${sectionName}${itemsText}\n🆔 <b>ID المتهم:</b> <code>${reportedId}</code>\n\n⏰ ${new Date().toLocaleString('ar-EG')}`;
+function notifyNewReport(senderName, sectionName, items, reportedId) {
+    let itemsText = items && items.length > 0 ? '\n📋 <b>البلاغات:</b>\n' + items.map(i => `• ${i}`).join('\n') : '';
+    const msg = `🚨 <b>بلاغ جديد وارد!</b>\n\n👤 <b>المرسل:</b> ${senderName}\n📁 <b>القسم:</b> ${sectionName}${itemsText}\n🆔 <b>ID المتهم:</b> <code>${reportedId}</code>\n\n⏰ ${new Date().toLocaleString('ar-EG')}`;
     sendTelegramMessage(msg);
 }
 
-function notifyNewWelcome(adminName, ids) {
+function notifyNewWelcome(senderName, ids) {
     const idsText = ids.map(idObj => `• [${idObj.type}] <code>${idObj.id}</code>`).join('\n');
-    const msg = `💡 <b>أيدية ترحيب جديدة!</b>\n\n👤 <b>الأدمن:</b> ${adminName}\n\n🆔 <b>الـ IDs المرتبطة:</b>\n${idsText}\n\n⏰ ${new Date().toLocaleString('ar-EG')}`;
+    const msg = `💡 <b>أيدية ترحيب جديدة!</b>\n\n👤 <b>المرسل:</b> ${senderName}\n\n🆔 <b>الـ IDs:</b>\n${idsText}\n\n⏰ ${new Date().toLocaleString('ar-EG')}`;
     sendTelegramMessage(msg);
 }
 
-function notifyNewIdChange(adminName, oldId, newId, shipmentOwnerId, shipmentMonth, shipmentAmount) {
-    const msg = `🔄 <b>طلب تغيير ID جديد!</b>\n\n👤 <b>الأدمن:</b> ${adminName}\n\n🆔 <b>الـ ID القديم:</b> <code>${oldId}</code>\n🆕 <b>الـ ID المطلوب:</b> <code>${newId}</code>\n📦 <b>صاحب الشحنة:</b> <code>${shipmentOwnerId}</code>\n📅 <b>الشهر:</b> ${shipmentMonth}\n💰 <b>القيمة:</b> ${shipmentAmount}$\n\n⏰ ${new Date().toLocaleString('ar-EG')}`;
+function notifyNewIdChange(senderName, oldId, newId, shipmentOwnerId, shipmentMonth, shipmentAmount) {
+    const msg = `🔄 <b>طلب تغيير ID جديد!</b>\n\n👤 <b>المرسل:</b> ${senderName}\n\n🆔 <b>القديم:</b> <code>${oldId}</code>\n🆕 <b>المطلوب:</b> <code>${newId}</code>\n📦 <b>صاحب الشحنة:</b> <code>${shipmentOwnerId}</code>\n📅 <b>الشهر:</b> ${shipmentMonth}\n💰 <b>القيمة:</b> ${shipmentAmount}$\n\n⏰ ${new Date().toLocaleString('ar-EG')}`;
     sendTelegramMessage(msg);
 }
 
-// Init/Update manager password to 1987
 db.ref('manager').update({ password: '1987' });
 </script>
 </body>
