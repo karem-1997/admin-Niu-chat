@@ -68,37 +68,43 @@
 <body class="text-slate-200 min-h-screen">
 
 <!-- Login Screen -->
-<div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-    <div class="glass rounded-2xl p-8 w-full max-w-md fade-in">
+<div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 relative">
+    <!-- Dropdown Menu - Outside the card, top left of screen -->
+    <div class="fixed top-4 left-4 z-50" id="loginDropdown">
+        <button onclick="toggleLoginDropdown()" class="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700">
+            <i class="fas fa-bars text-lg"></i>
+        </button>
+        <div id="dropdownMenu" class="hidden absolute left-0 top-full mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
+            <button onclick="switchLoginView('admin')" class="w-full text-right px-4 py-3 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-all">
+                Welcome To Niu chat
+            </button>
+            <button onclick="switchLoginView('manager')" class="w-full text-right px-4 py-3 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-all">
+                Niu chat
+            </button>
+        </div>
+    </div>
+    <div class="glass rounded-2xl p-8 w-full h-full min-h-[90vh] fade-in flex flex-col justify-center">
         <div class="text-center mb-8">
             <div class="w-28 h-28 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden bg-transparent">
                 <img src="https://i.postimg.cc/WzGdFDq5/file-000000001438820ab676ff97cafe9cea.png" alt="Logo" class="w-full h-full object-contain" style="mix-blend-mode: screen;">
             </div>
-            <h1 class="text-2xl font-bold gradient-text">لوحة إدارة Niu Chat</h1>
-            <p class="text-slate-400 text-sm mt-2">بوابة المدير والأدمن والوكيل</p>
+            <h1 class="text-2xl font-bold gradient-text" id="loginTitle">تسجيل الدخول</h1>
+            <p class="text-slate-400 text-sm mt-2" id="loginSubtitle"></p>
         </div>
-        <div class="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl">
-            <button onclick="setLoginType('admin')" id="btnAdminLogin" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white">
-                <i class="fas fa-user-shield ml-2"></i>أدمن
-            </button>
-            <button onclick="setLoginType('agent')" id="btnAgentLogin" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white">
-                <i class="fas fa-user-tie ml-2"></i>وكيل
-            </button>
-            <button onclick="setLoginType('manager')" id="btnManagerLogin" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white">
-                <i class="fas fa-crown ml-2"></i>مدير
-            </button>
-        </div>
-        <form id="loginForm" onsubmit="handleLogin(event)">
+        <form id="loginForm" onsubmit="handleLogin(event)" class="max-w-md mx-auto w-full">
             <div id="nameGroup" class="mb-4">
-                <label class="block text-sm font-medium text-slate-400 mb-2" id="nameLabel">اسم الأدمن</label>
+                <label class="block text-sm font-medium text-slate-400 mb-2" id="nameLabel">الاسم</label>
                 <input type="text" id="loginName" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all" placeholder="أدخل الاسم">
             </div>
             <div class="mb-6">
                 <label class="block text-sm font-medium text-slate-400 mb-2">كلمة المرور</label>
                 <input type="password" id="loginPassword" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all" placeholder="أدخل كلمة المرور">
             </div>
-            <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-white shadow-lg shadow-red-500/25">
+            <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-white shadow-lg shadow-red-500/25" id="loginSubmitBtn">
                 <i class="fas fa-sign-in-alt ml-2"></i>تسجيل الدخول
+            </button>
+            <button type="button" onclick="switchLoginView('agent')" id="backToAgentBtn" class="hidden w-full mt-3 py-3 rounded-xl font-bold text-slate-300 bg-slate-800/50 border border-slate-700 hover:bg-slate-700 hover:text-white transition-all">
+                <i class="fas fa-arrow-right ml-2"></i>رجوع
             </button>
         </form>
     </div>
@@ -109,6 +115,9 @@
     <header class="glass sticky top-0 z-50 border-b border-slate-700/50">
         <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-3">
+                <button onclick="logout()" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-all border border-slate-700" title="رجوع للبوابة الرئيسية">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-900 flex items-center justify-center">
                     <i class="fas fa-crown text-white"></i>
                 </div>
@@ -173,7 +182,35 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input type="text" id="newAgentName" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="اسم الوكيل">
                     <input type="password" id="newAgentPassword" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="كلمة المرور">
-                    <input type="text" id="newAgentWhatsApp" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="رقم الواتساب (مثال: 966501234567)">
+                    <div class="flex gap-2">
+                    <select id="newAgentCountry" class="bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-3 text-white focus:outline-none focus:border-orange-500 text-sm" style="min-width:140px">
+                        <option value="">اختر الدولة</option>
+                            <option value="966">🇸🇦 السعودية (+966)</option>
+                            <option value="971">🇦🇪 الإمارات (+971)</option>
+                            <option value="965">🇰🇼 الكويت (+965)</option>
+                            <option value="974">🇶🇦 قطر (+974)</option>
+                            <option value="973">🇧🇭 البحرين (+973)</option>
+                            <option value="968">🇴🇲 عمان (+968)</option>
+                            <option value="20">🇪🇬 مصر (+20)</option>
+                            <option value="962">🇯🇴 الأردن (+962)</option>
+                            <option value="961">🇱🇧 لبنان (+961)</option>
+                            <option value="963">🇸🇾 سوريا (+963)</option>
+                            <option value="964">🇮🇶 العراق (+964)</option>
+                            <option value="967">🇾🇪 اليمن (+967)</option>
+                            <option value="970">🇵🇸 فلسطين (+970)</option>
+                            <option value="212">🇲🇦 المغرب (+212)</option>
+                            <option value="213">🇩🇿 الجزائر (+213)</option>
+                            <option value="216">🇹🇳 تونس (+216)</option>
+                            <option value="218">🇱🇾 ليبيا (+218)</option>
+                            <option value="249">🇸🇩 السودان (+249)</option>
+                            <option value="253">🇩🇰 جيبوتي (+253)</option>
+                            <option value="222">🇲🇷 موريتانيا (+222)</option>
+                            <option value="252">🇸🇴 الصومال (+252)</option>
+                            <option value="39">🇮🇹 إيطاليا (+39)</option>
+                            <option value="33">🇫🇷 فرنسا (+33)</option>
+                    </select>
+                    <input type="text" id="newAgentWhatsApp" class="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="رقم الواتساب بدون كود الدولة">
+                </div>
                 </div>
                 <button onclick="createAgent()" class="btn-orange w-full mt-4 py-3 rounded-xl font-bold text-white"><i class="fas fa-plus ml-2"></i>إنشاء حساب وكيل</button>
             </div>
@@ -322,6 +359,7 @@
                 <button onclick="showAdminSection('admin-welcome')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-lightbulb ml-1"></i>أيديهات ترحيب</button>
                 <button onclick="showAdminSection('admin-idchange')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-id-card ml-1"></i>تغيير ID</button>
                 <button onclick="showAdminSection('admin-myreports')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-history ml-1"></i>بلاغاتي</button>
+                <button onclick="showAdminSection('admin-agents')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-user-tie ml-1"></i>الوكلاء</button>
                 <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
             </div>
         </div>
@@ -375,6 +413,46 @@
                 <button onclick="submitIdChange()" class="bg-gradient-to-r from-red-600 to-red-900 px-8 py-3 rounded-xl font-bold text-white hover:opacity-90 transition-all"><i class="fas fa-paper-plane ml-2"></i>إرسال طلب تغيير ID</button>
             </div>
         </div>
+        <div id="admin-agents" class="admin-section hidden">
+            <div class="glass rounded-2xl p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-user-plus text-orange-400"></i>إنشاء حساب وكيل جديد</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="adminNewAgentName" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="اسم الوكيل">
+                    <input type="password" id="adminNewAgentPassword" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="كلمة المرور">
+                    <div class="flex gap-2">
+                        <select id="adminNewAgentCountry" class="bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-3 text-white focus:outline-none focus:border-orange-500 text-sm" style="min-width:140px">
+                            <option value="">اختر الدولة</option>
+                            <option value="966">🇸🇦 السعودية (+966)</option>
+                            <option value="971">🇦🇪 الإمارات (+971)</option>
+                            <option value="965">🇰🇼 الكويت (+965)</option>
+                            <option value="974">🇶🇦 قطر (+974)</option>
+                            <option value="973">🇧🇭 البحرين (+973)</option>
+                            <option value="968">🇴🇲 عمان (+968)</option>
+                            <option value="20">🇪🇬 مصر (+20)</option>
+                            <option value="962">🇯🇴 الأردن (+962)</option>
+                            <option value="961">🇱🇧 لبنان (+961)</option>
+                            <option value="963">🇸🇾 سوريا (+963)</option>
+                            <option value="964">🇮🇶 العراق (+964)</option>
+                            <option value="967">🇾🇪 اليمن (+967)</option>
+                            <option value="970">🇵🇸 فلسطين (+970)</option>
+                            <option value="212">🇲🇦 المغرب (+212)</option>
+                            <option value="213">🇩🇿 الجزائر (+213)</option>
+                            <option value="216">🇹🇳 تونس (+216)</option>
+                            <option value="218">🇱🇾 ليبيا (+218)</option>
+                            <option value="249">🇸🇩 السودان (+249)</option>
+                            <option value="253">🇩🇰 جيبوتي (+253)</option>
+                            <option value="222">🇲🇷 موريتانيا (+222)</option>
+                            <option value="252">🇸🇴 الصومال (+252)</option>
+                            <option value="39">🇮🇹 إيطاليا (+39)</option>
+                            <option value="33">🇫🇷 فرنسا (+33)</option>
+                        </select>
+                        <input type="text" id="adminNewAgentWhatsApp" class="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="رقم الواتساب بدون كود الدولة">
+                    </div>
+                </div>
+                <button onclick="createAgentFromAdmin()" class="btn-orange w-full mt-4 py-3 rounded-xl font-bold text-white"><i class="fas fa-plus ml-2"></i>إنشاء حساب وكيل</button>
+            </div>
+        </div>
+
         <div id="admin-myreports" class="admin-section hidden">
             <div class="glass rounded-2xl p-6"><h3 class="text-xl font-bold mb-4">بلاغاتي السابقة</h3><div id="myReportsList" class="space-y-3"></div></div>
         </div>
@@ -459,30 +537,68 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let currentUser = null, userType = null, selectedSectionId = null, selectedSectionData = null, loginType = 'admin';
+let currentUser = null, userType = null, selectedSectionId = null, selectedSectionData = null, loginType = 'agent';
 
-function setLoginType(type) {
+function switchLoginView(type) {
     loginType = type;
-    const adminBtn = document.getElementById('btnAdminLogin');
-    const agentBtn = document.getElementById('btnAgentLogin');
-    const managerBtn = document.getElementById('btnManagerLogin');
+    const nameGroup = document.getElementById('nameGroup');
     const nameLabel = document.getElementById('nameLabel');
-    adminBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
-    agentBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
-    managerBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white';
+    const loginTitle = document.getElementById('loginTitle');
+    const loginSubtitle = document.getElementById('loginSubtitle');
+    const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+    const loginName = document.getElementById('loginName');
+    const backBtn = document.getElementById('backToAgentBtn');
+
+    // Close dropdown
+    document.getElementById('dropdownMenu').classList.add('hidden');
+
     if (type === 'admin') {
-        adminBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white';
-        nameLabel.textContent = 'اسم الأدمن';
-        document.getElementById('nameGroup').style.display = 'block';
+        nameGroup.classList.remove('hidden');
+        nameLabel.textContent = 'الاسم';
+        loginName.placeholder = 'أدخل الاسم';
+        loginTitle.textContent = 'Welcome To Niu chat';
+        loginSubtitle.textContent = 'بوابة الموظف';
+        loginSubmitBtn.className = 'btn-primary w-full py-3 rounded-xl font-bold text-white shadow-lg shadow-red-500/25';
+        loginSubmitBtn.style.background = '';
+        backBtn.classList.remove('hidden');
     } else if (type === 'agent') {
-        agentBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-orange-500 text-white';
-        nameLabel.textContent = 'اسم الوكيل';
-        document.getElementById('nameGroup').style.display = 'block';
-    } else {
-        managerBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-purple-600 text-white';
-        document.getElementById('nameGroup').style.display = 'none';
+        nameGroup.classList.remove('hidden');
+        nameLabel.textContent = 'الاسم';
+        loginName.placeholder = 'أدخل الاسم';
+        loginTitle.textContent = 'تسجيل الدخول';
+        loginSubtitle.textContent = '';
+        loginSubmitBtn.className = 'btn-orange w-full py-3 rounded-xl font-bold text-white shadow-lg shadow-orange-500/25';
+        loginSubmitBtn.style.background = '';
+        backBtn.classList.add('hidden');
+    } else if (type === 'manager') {
+        nameGroup.classList.add('hidden');
+        loginTitle.textContent = 'NIU chat';
+        loginSubtitle.textContent = 'بوابة المدير';
+        loginSubmitBtn.className = 'w-full py-3 rounded-xl font-bold text-white shadow-lg shadow-purple-500/25';
+        loginSubmitBtn.style.background = 'linear-gradient(135deg, #9333ea, #581c87)';
+        backBtn.classList.remove('hidden');
     }
 }
+
+function toggleLoginDropdown() {
+    const menu = document.getElementById('dropdownMenu');
+    if (menu.classList.contains('hidden')) {
+        menu.classList.remove('hidden');
+    } else {
+        menu.classList.add('hidden');
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('loginDropdown');
+    if (dropdown && !dropdown.contains(e.target)) {
+        const menu = document.getElementById('dropdownMenu');
+        if (menu && !menu.classList.contains('hidden')) {
+            menu.classList.add('hidden');
+        }
+    }
+});
 
 function handleLogin(e) {
     e.preventDefault();
@@ -626,12 +742,17 @@ function toggleAgentPassword(key) {
 function createAgent() {
     const name = document.getElementById('newAgentName').value.trim();
     const password = document.getElementById('newAgentPassword').value;
-    const whatsapp = document.getElementById('newAgentWhatsApp').value.trim();
+    const country = document.getElementById('newAgentCountry').value;
+    const number = document.getElementById('newAgentWhatsApp').value.trim();
+    const whatsapp = country && number ? country + number : (number || '');
     if (!name || !password) return showToast('يرجى ملء اسم الوكيل وكلمة المرور');
     const key = db.ref('agents').push().key;
-    db.ref('agents/' + key).set({ name, password, whatsapp: whatsapp || '' }).then(() => {
+    db.ref('agents/' + key).set({ name, password, whatsapp: whatsapp }).then(() => {
         showToast('تم إنشاء حساب الوكيل بنجاح');
-        document.getElementById('newAgentName').value = ''; document.getElementById('newAgentPassword').value = ''; document.getElementById('newAgentWhatsApp').value = '';
+        document.getElementById('newAgentName').value = '';
+        document.getElementById('newAgentPassword').value = '';
+        document.getElementById('newAgentCountry').value = '';
+        document.getElementById('newAgentWhatsApp').value = '';
     });
 }
 
@@ -953,7 +1074,27 @@ function showAdminDashboard() {
     showAdminSection('admin-submit');
     loadAdminSections();
     loadMyReports();
+    
 }
+
+function createAgentFromAdmin() {
+    const name = document.getElementById('adminNewAgentName').value.trim();
+    const password = document.getElementById('adminNewAgentPassword').value;
+    const country = document.getElementById('adminNewAgentCountry').value;
+    const number = document.getElementById('adminNewAgentWhatsApp').value.trim();
+    const whatsapp = country && number ? country + number : (number || '');
+    if (!name || !password) return showToast('يرجى ملء اسم الوكيل وكلمة المرور');
+    const key = db.ref('agents').push().key;
+    db.ref('agents/' + key).set({ name, password, whatsapp: whatsapp }).then(() => {
+        showToast('تم إنشاء حساب الوكيل بنجاح');
+        document.getElementById('adminNewAgentName').value = '';
+        document.getElementById('adminNewAgentPassword').value = '';
+        document.getElementById('adminNewAgentCountry').value = '';
+        document.getElementById('adminNewAgentWhatsApp').value = '';
+    });
+}
+
+
 
 function showAdminSection(id) {
     document.querySelectorAll('.admin-section').forEach(el => el.classList.add('hidden'));
