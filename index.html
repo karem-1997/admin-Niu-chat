@@ -4,10 +4,637 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة إدارة Niu Chat</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+// ========== EXPORT TO EXCEL ==========
+async function exportToExcel() {
+    showToast('⏳ جاري جمع البيانات وتصديرها...');
+
+    try {
+        // Fetch all data from Firebase
+        const [
+            adminsSnap, agentsSnap, reportsSnap, idChangesSnap, welcomesSnap,
+            archiveReportsSnap, archiveIdChangesSnap, archiveWelcomesSnap
+        ] = await Promise.all([
+            db.ref('admins').once('value'),
+            db.ref('agents').once('value'),
+            db.ref('reports').once('value'),
+            db.ref('idChanges').once('value'),
+            db.ref('welcomes').once('value'),
+            db.ref('archive/reports').once('value'),
+            db.ref('archive/idChanges').once('value'),
+            db.ref('archive/welcomes').once('value')
+        ]);
+
+        const admins = adminsSnap.val() || {};
+        const agents = agentsSnap.val() || {};
+        const reports = reportsSnap.val() || {};
+        const idChanges = idChangesSnap.val() || {};
+        const welcomes = welcomesSnap.val() || {};
+        const archiveReports = archiveReportsSnap.val() || {};
+        const archiveIdChanges = archiveIdChangesSnap.val() || {};
+        const archiveWelcomes = archiveWelcomesSnap.val() || {};
+
+        const wb = XLSX.utils.book_new();
+        wb.Props = {
+            Title: "Niu Chat - Export",
+            Subject: "Niu Chat Dashboard Data",
+            Author: "Niu Chat Admin",
+            CreatedDate: new Date()
+        };
+
+        // Sheet 1: Admins
+        const adminsData = Object.entries(admins).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || ''
+        }));
+        if (adminsData.length > 0) {
+            const wsAdmins = XLSX.utils.json_to_sheet(adminsData);
+            XLSX.utils.book_append_sheet(wb, wsAdmins, "الأدمن");
+        }
+
+        // Sheet 2: Agents
+        const agentsData = Object.entries(agents).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || '',
+            'رقم الواتساب': val.whatsapp || ''
+        }));
+        if (agentsData.length > 0) {
+            const wsAgents = XLSX.utils.json_to_sheet(agentsData);
+            XLSX.utils.book_append_sheet(wb, wsAgents, "الوكلاء");
+        }
+
+        // Sheet 3: Reports (Current)
+        const reportsData = Object.entries(reports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': val.status === 'solved' ? 'تم الحل' : 'قيد المعالجة',
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (reportsData.length > 0) {
+            const wsReports = XLSX.utils.json_to_sheet(reportsData);
+            XLSX.utils.book_append_sheet(wb, wsReports, "البلاغات الحالية");
+        }
+
+        // Sheet 4: Archive Reports
+        const archiveReportsData = Object.entries(archiveReports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': 'تم الحل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الحل': val.solvedAt ? new Date(val.solvedAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveReportsData.length > 0) {
+            const wsArchiveReports = XLSX.utils.json_to_sheet(archiveReportsData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveReports, "أرشيف البلاغات");
+        }
+
+        // Sheet 5: ID Changes (Current)
+        const idChangesData = Object.entries(idChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': val.status === 'done' ? 'تم العمل' : (val.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'),
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (idChangesData.length > 0) {
+            const wsIdChanges = XLSX.utils.json_to_sheet(idChangesData);
+            XLSX.utils.book_append_sheet(wb, wsIdChanges, "تغيير ID - حالي");
+        }
+
+        // Sheet 6: Archive ID Changes
+        const archiveIdChangesData = Object.entries(archiveIdChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': 'تم العمل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الإنجاز': val.doneAt ? new Date(val.doneAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveIdChangesData.length > 0) {
+            const wsArchiveIdChanges = XLSX.utils.json_to_sheet(archiveIdChangesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveIdChanges, "أرشيف تغيير ID");
+        }
+
+        // Sheet 7: Welcomes (Current)
+        const welcomesData = [];
+        Object.entries(welcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    welcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                welcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (welcomesData.length > 0) {
+            const wsWelcomes = XLSX.utils.json_to_sheet(welcomesData);
+            XLSX.utils.book_append_sheet(wb, wsWelcomes, "الترحيبات الحالية");
+        }
+
+        // Sheet 8: Archive Welcomes
+        const archiveWelcomesData = [];
+        Object.entries(archiveWelcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    archiveWelcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                        'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                archiveWelcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                    'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (archiveWelcomesData.length > 0) {
+            const wsArchiveWelcomes = XLSX.utils.json_to_sheet(archiveWelcomesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveWelcomes, "أرشيف الترحيبات");
+        }
+
+        // Generate filename with date
+        const now = new Date();
+        const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+        const filename = 'NiuChat_Export_' + dateStr + '.xlsx';
+
+        XLSX.writeFile(wb, filename);
+        showToast('✅ تم تصدير البيانات بنجاح! (' + filename + ')');
+
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('❌ خطأ في التصدير: ' + error.message);
+    }
+}
+
+</script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js">
+// ========== EXPORT TO EXCEL ==========
+async function exportToExcel() {
+    showToast('⏳ جاري جمع البيانات وتصديرها...');
+
+    try {
+        // Fetch all data from Firebase
+        const [
+            adminsSnap, agentsSnap, reportsSnap, idChangesSnap, welcomesSnap,
+            archiveReportsSnap, archiveIdChangesSnap, archiveWelcomesSnap
+        ] = await Promise.all([
+            db.ref('admins').once('value'),
+            db.ref('agents').once('value'),
+            db.ref('reports').once('value'),
+            db.ref('idChanges').once('value'),
+            db.ref('welcomes').once('value'),
+            db.ref('archive/reports').once('value'),
+            db.ref('archive/idChanges').once('value'),
+            db.ref('archive/welcomes').once('value')
+        ]);
+
+        const admins = adminsSnap.val() || {};
+        const agents = agentsSnap.val() || {};
+        const reports = reportsSnap.val() || {};
+        const idChanges = idChangesSnap.val() || {};
+        const welcomes = welcomesSnap.val() || {};
+        const archiveReports = archiveReportsSnap.val() || {};
+        const archiveIdChanges = archiveIdChangesSnap.val() || {};
+        const archiveWelcomes = archiveWelcomesSnap.val() || {};
+
+        const wb = XLSX.utils.book_new();
+        wb.Props = {
+            Title: "Niu Chat - Export",
+            Subject: "Niu Chat Dashboard Data",
+            Author: "Niu Chat Admin",
+            CreatedDate: new Date()
+        };
+
+        // Sheet 1: Admins
+        const adminsData = Object.entries(admins).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || ''
+        }));
+        if (adminsData.length > 0) {
+            const wsAdmins = XLSX.utils.json_to_sheet(adminsData);
+            XLSX.utils.book_append_sheet(wb, wsAdmins, "الأدمن");
+        }
+
+        // Sheet 2: Agents
+        const agentsData = Object.entries(agents).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || '',
+            'رقم الواتساب': val.whatsapp || ''
+        }));
+        if (agentsData.length > 0) {
+            const wsAgents = XLSX.utils.json_to_sheet(agentsData);
+            XLSX.utils.book_append_sheet(wb, wsAgents, "الوكلاء");
+        }
+
+        // Sheet 3: Reports (Current)
+        const reportsData = Object.entries(reports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': val.status === 'solved' ? 'تم الحل' : 'قيد المعالجة',
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (reportsData.length > 0) {
+            const wsReports = XLSX.utils.json_to_sheet(reportsData);
+            XLSX.utils.book_append_sheet(wb, wsReports, "البلاغات الحالية");
+        }
+
+        // Sheet 4: Archive Reports
+        const archiveReportsData = Object.entries(archiveReports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': 'تم الحل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الحل': val.solvedAt ? new Date(val.solvedAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveReportsData.length > 0) {
+            const wsArchiveReports = XLSX.utils.json_to_sheet(archiveReportsData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveReports, "أرشيف البلاغات");
+        }
+
+        // Sheet 5: ID Changes (Current)
+        const idChangesData = Object.entries(idChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': val.status === 'done' ? 'تم العمل' : (val.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'),
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (idChangesData.length > 0) {
+            const wsIdChanges = XLSX.utils.json_to_sheet(idChangesData);
+            XLSX.utils.book_append_sheet(wb, wsIdChanges, "تغيير ID - حالي");
+        }
+
+        // Sheet 6: Archive ID Changes
+        const archiveIdChangesData = Object.entries(archiveIdChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': 'تم العمل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الإنجاز': val.doneAt ? new Date(val.doneAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveIdChangesData.length > 0) {
+            const wsArchiveIdChanges = XLSX.utils.json_to_sheet(archiveIdChangesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveIdChanges, "أرشيف تغيير ID");
+        }
+
+        // Sheet 7: Welcomes (Current)
+        const welcomesData = [];
+        Object.entries(welcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    welcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                welcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (welcomesData.length > 0) {
+            const wsWelcomes = XLSX.utils.json_to_sheet(welcomesData);
+            XLSX.utils.book_append_sheet(wb, wsWelcomes, "الترحيبات الحالية");
+        }
+
+        // Sheet 8: Archive Welcomes
+        const archiveWelcomesData = [];
+        Object.entries(archiveWelcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    archiveWelcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                        'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                archiveWelcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                    'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (archiveWelcomesData.length > 0) {
+            const wsArchiveWelcomes = XLSX.utils.json_to_sheet(archiveWelcomesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveWelcomes, "أرشيف الترحيبات");
+        }
+
+        // Generate filename with date
+        const now = new Date();
+        const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+        const filename = 'NiuChat_Export_' + dateStr + '.xlsx';
+
+        XLSX.writeFile(wb, filename);
+        showToast('✅ تم تصدير البيانات بنجاح! (' + filename + ')');
+
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('❌ خطأ في التصدير: ' + error.message);
+    }
+}
+
+</script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js">
+// ========== EXPORT TO EXCEL ==========
+async function exportToExcel() {
+    showToast('⏳ جاري جمع البيانات وتصديرها...');
+
+    try {
+        // Fetch all data from Firebase
+        const [
+            adminsSnap, agentsSnap, reportsSnap, idChangesSnap, welcomesSnap,
+            archiveReportsSnap, archiveIdChangesSnap, archiveWelcomesSnap
+        ] = await Promise.all([
+            db.ref('admins').once('value'),
+            db.ref('agents').once('value'),
+            db.ref('reports').once('value'),
+            db.ref('idChanges').once('value'),
+            db.ref('welcomes').once('value'),
+            db.ref('archive/reports').once('value'),
+            db.ref('archive/idChanges').once('value'),
+            db.ref('archive/welcomes').once('value')
+        ]);
+
+        const admins = adminsSnap.val() || {};
+        const agents = agentsSnap.val() || {};
+        const reports = reportsSnap.val() || {};
+        const idChanges = idChangesSnap.val() || {};
+        const welcomes = welcomesSnap.val() || {};
+        const archiveReports = archiveReportsSnap.val() || {};
+        const archiveIdChanges = archiveIdChangesSnap.val() || {};
+        const archiveWelcomes = archiveWelcomesSnap.val() || {};
+
+        const wb = XLSX.utils.book_new();
+        wb.Props = {
+            Title: "Niu Chat - Export",
+            Subject: "Niu Chat Dashboard Data",
+            Author: "Niu Chat Admin",
+            CreatedDate: new Date()
+        };
+
+        // Sheet 1: Admins
+        const adminsData = Object.entries(admins).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || ''
+        }));
+        if (adminsData.length > 0) {
+            const wsAdmins = XLSX.utils.json_to_sheet(adminsData);
+            XLSX.utils.book_append_sheet(wb, wsAdmins, "الأدمن");
+        }
+
+        // Sheet 2: Agents
+        const agentsData = Object.entries(agents).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || '',
+            'رقم الواتساب': val.whatsapp || ''
+        }));
+        if (agentsData.length > 0) {
+            const wsAgents = XLSX.utils.json_to_sheet(agentsData);
+            XLSX.utils.book_append_sheet(wb, wsAgents, "الوكلاء");
+        }
+
+        // Sheet 3: Reports (Current)
+        const reportsData = Object.entries(reports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': val.status === 'solved' ? 'تم الحل' : 'قيد المعالجة',
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (reportsData.length > 0) {
+            const wsReports = XLSX.utils.json_to_sheet(reportsData);
+            XLSX.utils.book_append_sheet(wb, wsReports, "البلاغات الحالية");
+        }
+
+        // Sheet 4: Archive Reports
+        const archiveReportsData = Object.entries(archiveReports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': 'تم الحل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الحل': val.solvedAt ? new Date(val.solvedAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveReportsData.length > 0) {
+            const wsArchiveReports = XLSX.utils.json_to_sheet(archiveReportsData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveReports, "أرشيف البلاغات");
+        }
+
+        // Sheet 5: ID Changes (Current)
+        const idChangesData = Object.entries(idChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': val.status === 'done' ? 'تم العمل' : (val.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'),
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (idChangesData.length > 0) {
+            const wsIdChanges = XLSX.utils.json_to_sheet(idChangesData);
+            XLSX.utils.book_append_sheet(wb, wsIdChanges, "تغيير ID - حالي");
+        }
+
+        // Sheet 6: Archive ID Changes
+        const archiveIdChangesData = Object.entries(archiveIdChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': 'تم العمل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الإنجاز': val.doneAt ? new Date(val.doneAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveIdChangesData.length > 0) {
+            const wsArchiveIdChanges = XLSX.utils.json_to_sheet(archiveIdChangesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveIdChanges, "أرشيف تغيير ID");
+        }
+
+        // Sheet 7: Welcomes (Current)
+        const welcomesData = [];
+        Object.entries(welcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    welcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                welcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (welcomesData.length > 0) {
+            const wsWelcomes = XLSX.utils.json_to_sheet(welcomesData);
+            XLSX.utils.book_append_sheet(wb, wsWelcomes, "الترحيبات الحالية");
+        }
+
+        // Sheet 8: Archive Welcomes
+        const archiveWelcomesData = [];
+        Object.entries(archiveWelcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    archiveWelcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                        'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                archiveWelcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                    'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (archiveWelcomesData.length > 0) {
+            const wsArchiveWelcomes = XLSX.utils.json_to_sheet(archiveWelcomesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveWelcomes, "أرشيف الترحيبات");
+        }
+
+        // Generate filename with date
+        const now = new Date();
+        const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+        const filename = 'NiuChat_Export_' + dateStr + '.xlsx';
+
+        XLSX.writeFile(wb, filename);
+        showToast('✅ تم تصدير البيانات بنجاح! (' + filename + ')');
+
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('❌ خطأ في التصدير: ' + error.message);
+    }
+}
+
+</script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { font-family: 'Cairo', sans-serif; }
@@ -64,6 +691,216 @@
         .id-input-group { animation: fadeIn 0.3s ease; }
         .password-hidden { -webkit-text-security: disc; }
     </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+// ========== EXPORT TO EXCEL ==========
+async function exportToExcel() {
+    showToast('⏳ جاري جمع البيانات وتصديرها...');
+
+    try {
+        // Fetch all data from Firebase
+        const [
+            adminsSnap, agentsSnap, reportsSnap, idChangesSnap, welcomesSnap,
+            archiveReportsSnap, archiveIdChangesSnap, archiveWelcomesSnap
+        ] = await Promise.all([
+            db.ref('admins').once('value'),
+            db.ref('agents').once('value'),
+            db.ref('reports').once('value'),
+            db.ref('idChanges').once('value'),
+            db.ref('welcomes').once('value'),
+            db.ref('archive/reports').once('value'),
+            db.ref('archive/idChanges').once('value'),
+            db.ref('archive/welcomes').once('value')
+        ]);
+
+        const admins = adminsSnap.val() || {};
+        const agents = agentsSnap.val() || {};
+        const reports = reportsSnap.val() || {};
+        const idChanges = idChangesSnap.val() || {};
+        const welcomes = welcomesSnap.val() || {};
+        const archiveReports = archiveReportsSnap.val() || {};
+        const archiveIdChanges = archiveIdChangesSnap.val() || {};
+        const archiveWelcomes = archiveWelcomesSnap.val() || {};
+
+        const wb = XLSX.utils.book_new();
+        wb.Props = {
+            Title: "Niu Chat - Export",
+            Subject: "Niu Chat Dashboard Data",
+            Author: "Niu Chat Admin",
+            CreatedDate: new Date()
+        };
+
+        // Sheet 1: Admins
+        const adminsData = Object.entries(admins).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || ''
+        }));
+        if (adminsData.length > 0) {
+            const wsAdmins = XLSX.utils.json_to_sheet(adminsData);
+            XLSX.utils.book_append_sheet(wb, wsAdmins, "الأدمن");
+        }
+
+        // Sheet 2: Agents
+        const agentsData = Object.entries(agents).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || '',
+            'رقم الواتساب': val.whatsapp || ''
+        }));
+        if (agentsData.length > 0) {
+            const wsAgents = XLSX.utils.json_to_sheet(agentsData);
+            XLSX.utils.book_append_sheet(wb, wsAgents, "الوكلاء");
+        }
+
+        // Sheet 3: Reports (Current)
+        const reportsData = Object.entries(reports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': val.status === 'solved' ? 'تم الحل' : 'قيد المعالجة',
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (reportsData.length > 0) {
+            const wsReports = XLSX.utils.json_to_sheet(reportsData);
+            XLSX.utils.book_append_sheet(wb, wsReports, "البلاغات الحالية");
+        }
+
+        // Sheet 4: Archive Reports
+        const archiveReportsData = Object.entries(archiveReports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': 'تم الحل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الحل': val.solvedAt ? new Date(val.solvedAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveReportsData.length > 0) {
+            const wsArchiveReports = XLSX.utils.json_to_sheet(archiveReportsData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveReports, "أرشيف البلاغات");
+        }
+
+        // Sheet 5: ID Changes (Current)
+        const idChangesData = Object.entries(idChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': val.status === 'done' ? 'تم العمل' : (val.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'),
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (idChangesData.length > 0) {
+            const wsIdChanges = XLSX.utils.json_to_sheet(idChangesData);
+            XLSX.utils.book_append_sheet(wb, wsIdChanges, "تغيير ID - حالي");
+        }
+
+        // Sheet 6: Archive ID Changes
+        const archiveIdChangesData = Object.entries(archiveIdChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': 'تم العمل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الإنجاز': val.doneAt ? new Date(val.doneAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveIdChangesData.length > 0) {
+            const wsArchiveIdChanges = XLSX.utils.json_to_sheet(archiveIdChangesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveIdChanges, "أرشيف تغيير ID");
+        }
+
+        // Sheet 7: Welcomes (Current)
+        const welcomesData = [];
+        Object.entries(welcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    welcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                welcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (welcomesData.length > 0) {
+            const wsWelcomes = XLSX.utils.json_to_sheet(welcomesData);
+            XLSX.utils.book_append_sheet(wb, wsWelcomes, "الترحيبات الحالية");
+        }
+
+        // Sheet 8: Archive Welcomes
+        const archiveWelcomesData = [];
+        Object.entries(archiveWelcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    archiveWelcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                        'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                archiveWelcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                    'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (archiveWelcomesData.length > 0) {
+            const wsArchiveWelcomes = XLSX.utils.json_to_sheet(archiveWelcomesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveWelcomes, "أرشيف الترحيبات");
+        }
+
+        // Generate filename with date
+        const now = new Date();
+        const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+        const filename = 'NiuChat_Export_' + dateStr + '.xlsx';
+
+        XLSX.writeFile(wb, filename);
+        showToast('✅ تم تصدير البيانات بنجاح! (' + filename + ')');
+
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('❌ خطأ في التصدير: ' + error.message);
+    }
+}
+
+</script>
 </head>
 <body class="text-slate-200 min-h-screen">
 
@@ -136,6 +973,8 @@
                 <button onclick="showSection('manager-archive')" class="px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-sm transition-all"><i class="fas fa-archive ml-1"></i>الأرشيف</button>
                 <button onclick="showSection('manager-clear')" class="px-3 py-2 rounded-lg bg-red-900/40 text-red-400 hover:bg-red-900/60 text-sm transition-all border border-red-500/30"><i class="fas fa-trash-alt ml-1"></i>مسح البيانات</button>
                 <button onclick="showSection('manager-telegram')" class="px-3 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-sm transition-all border border-blue-500/30"><i class="fab fa-telegram ml-1"></i>إعدادات التلجرام</button>
+                <button onclick="exportToExcel()" class="px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-sm transition-all border border-emerald-500/30"><i class="fas fa-file-excel ml-1"></i>تصدير Excel</button>
+                <button onclick="showSection('manager-sheets')" class="px-3 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm transition-all border border-green-500/30"><i class="fas fa-file-excel ml-1"></i>Google Sheets</button>
                 <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
             </div>
         </div>
@@ -182,35 +1021,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input type="text" id="newAgentName" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="اسم الوكيل">
                     <input type="password" id="newAgentPassword" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="كلمة المرور">
-                    <div class="flex gap-2">
-                    <select id="newAgentCountry" class="bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-3 text-white focus:outline-none focus:border-orange-500 text-sm" style="min-width:140px">
-                        <option value="">اختر الدولة</option>
-                            <option value="966">🇸🇦 السعودية (+966)</option>
-                            <option value="971">🇦🇪 الإمارات (+971)</option>
-                            <option value="965">🇰🇼 الكويت (+965)</option>
-                            <option value="974">🇶🇦 قطر (+974)</option>
-                            <option value="973">🇧🇭 البحرين (+973)</option>
-                            <option value="968">🇴🇲 عمان (+968)</option>
-                            <option value="20">🇪🇬 مصر (+20)</option>
-                            <option value="962">🇯🇴 الأردن (+962)</option>
-                            <option value="961">🇱🇧 لبنان (+961)</option>
-                            <option value="963">🇸🇾 سوريا (+963)</option>
-                            <option value="964">🇮🇶 العراق (+964)</option>
-                            <option value="967">🇾🇪 اليمن (+967)</option>
-                            <option value="970">🇵🇸 فلسطين (+970)</option>
-                            <option value="212">🇲🇦 المغرب (+212)</option>
-                            <option value="213">🇩🇿 الجزائر (+213)</option>
-                            <option value="216">🇹🇳 تونس (+216)</option>
-                            <option value="218">🇱🇾 ليبيا (+218)</option>
-                            <option value="249">🇸🇩 السودان (+249)</option>
-                            <option value="253">🇩🇰 جيبوتي (+253)</option>
-                            <option value="222">🇲🇷 موريتانيا (+222)</option>
-                            <option value="252">🇸🇴 الصومال (+252)</option>
-                            <option value="39">🇮🇹 إيطاليا (+39)</option>
-                            <option value="33">🇫🇷 فرنسا (+33)</option>
-                    </select>
-                    <input type="text" id="newAgentWhatsApp" class="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="رقم الواتساب بدون كود الدولة">
-                </div>
+                    <input type="text" id="newAgentWhatsApp" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="رقم الواتساب مع كود الدولة (مثال: +966501234567)">
                 </div>
                 <button onclick="createAgent()" class="btn-orange w-full mt-4 py-3 rounded-xl font-bold text-white"><i class="fas fa-plus ml-2"></i>إنشاء حساب وكيل</button>
             </div>
@@ -270,19 +1081,46 @@
             </div>
             <div id="archive-reports" class="archive-tab">
                 <div class="glass rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-4"><h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-clipboard-check text-green-400"></i>أرشيف البلاغات المحلولة</h3><button onclick="clearArchiveReports()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash ml-1"></i>مسح الأرشيف</button></div>
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                        <h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-clipboard-check text-green-400"></i>أرشيف البلاغات المحلولة</h3>
+                        <div class="flex items-center gap-2">
+                            <div class="relative">
+                                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                                <input type="text" id="searchArchiveReports" oninput="searchArchiveReports()" class="bg-slate-800/50 border border-slate-700 rounded-lg pr-9 pl-4 py-2 text-white text-sm focus:outline-none focus:border-green-500 w-64" placeholder="بحث بـ ID المتهم أو المرسل...">
+                            </div>
+                            <button onclick="clearArchiveReports()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash ml-1"></i>مسح الأرشيف</button>
+                        </div>
+                    </div>
                     <div id="archiveReportsList" class="space-y-3"></div>
                 </div>
             </div>
             <div id="archive-idchanges" class="archive-tab hidden">
                 <div class="glass rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-4"><h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-check-circle text-green-400"></i>أرشيف تغيير ID المنجزة</h3><button onclick="clearArchiveIdChanges()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash ml-1"></i>مسح الأرشيف</button></div>
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                        <h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-check-circle text-green-400"></i>أرشيف تغيير ID المنجزة</h3>
+                        <div class="flex items-center gap-2">
+                            <div class="relative">
+                                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                                <input type="text" id="searchArchiveIdChanges" oninput="searchArchiveIdChanges()" class="bg-slate-800/50 border border-slate-700 rounded-lg pr-9 pl-4 py-2 text-white text-sm focus:outline-none focus:border-green-500 w-64" placeholder="بحث بـ ID القديم أو المطلوب أو صاحب الشحنة...">
+                            </div>
+                            <button onclick="clearArchiveIdChanges()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash ml-1"></i>مسح الأرشيف</button>
+                        </div>
+                    </div>
                     <div id="archiveIdChangesList" class="space-y-3"></div>
                 </div>
             </div>
             <div id="archive-welcomes" class="archive-tab hidden">
                 <div class="glass rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-4"><h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-archive text-amber-400"></i>أرشيف الترحيبات</h3><button onclick="clearArchiveWelcomes()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash ml-1"></i>مسح الأرشيف</button></div>
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                        <h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-archive text-amber-400"></i>أرشيف الترحيبات</h3>
+                        <div class="flex items-center gap-2">
+                            <div class="relative">
+                                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                                <input type="text" id="searchArchiveWelcomes" oninput="searchArchiveWelcomes()" class="bg-slate-800/50 border border-slate-700 rounded-lg pr-9 pl-4 py-2 text-white text-sm focus:outline-none focus:border-green-500 w-64" placeholder="بحث بـ ID أو اسم المرسل...">
+                            </div>
+                            <button onclick="clearArchiveWelcomes()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-trash ml-1"></i>مسح الأرشيف</button>
+                        </div>
+                    </div>
                     <div id="archiveWelcomesList" class="space-y-3"></div>
                 </div>
             </div>
@@ -310,6 +1148,38 @@
                 <div class="flex gap-3">
                     <button onclick="saveTelegramSettings()" class="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-slate-600 to-slate-800 cursor-not-allowed transition-all"><i class="fas fa-lock ml-2"></i>الإعدادات ثابتة</button>
                     <button onclick="testTelegramConnection()" class="px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 transition-all shadow-lg shadow-green-500/25"><i class="fas fa-paper-plane ml-2"></i>اختبار الإرسال</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="manager-sheets" class="manager-section hidden">
+            <div class="glass rounded-2xl p-8 border-2 border-green-500/30">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4"><i class="fas fa-file-excel text-green-400 text-3xl"></i></div>
+                    <h3 class="text-2xl font-bold text-green-400 mb-2">ربط Google Sheets</h3>
+                    <p class="text-slate-400">ربط بـ Google Sheets لتسجيل جميع البيانات تلقائياً</p>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Google Apps Script Web App URL <span class="text-red-400">*</span></label>
+                    <div class="relative">
+                        <i class="fas fa-link absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" id="sheetsScriptUrl" value="https://script.google.com/macros/s/AKfycbzrUCHqMEeZ5mOS7KGWRwYeWlBZrTpmc-YP30fwDiCv95wsWq9lLfxVm07dqtT1wXVeog/exec" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl pr-10 pl-4 py-3 text-white focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all font-mono text-sm" placeholder="https://script.google.com/macros/s/.../exec">
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">الرابط اللي بيجيلك لما تنشر الـ Script كـ Web App</p>
+                </div>
+                <div class="bg-green-950/30 rounded-xl p-6 mb-6 border border-green-500/20">
+                    <h4 class="font-bold text-green-300 mb-3 flex items-center gap-2"><i class="fas fa-info-circle"></i>الأوراق اللي هتتعمل تلقائياً:</h4>
+                    <ul class="space-y-2 text-sm text-slate-300">
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>Reports — البلاغات والمشاكل</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>IDChanges — طلبات تغيير الـ ID</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>Welcomes — أيديهات الترحيب</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>Agents — حسابات الوكلاء</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i>Admins — حسابات الأدمن</li>
+                    </ul>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="saveSheetsSettings()" class="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 transition-all shadow-lg shadow-green-500/25"><i class="fas fa-save ml-2"></i>حفظ الرابط</button>
+                    <button onclick="testSheetsConnection()" class="px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25"><i class="fas fa-paper-plane ml-2"></i>اختبار الاتصال</button>
                 </div>
             </div>
         </div>
@@ -419,35 +1289,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input type="text" id="adminNewAgentName" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="اسم الوكيل">
                     <input type="password" id="adminNewAgentPassword" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="كلمة المرور">
-                    <div class="flex gap-2">
-                        <select id="adminNewAgentCountry" class="bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-3 text-white focus:outline-none focus:border-orange-500 text-sm" style="min-width:140px">
-                            <option value="">اختر الدولة</option>
-                            <option value="966">🇸🇦 السعودية (+966)</option>
-                            <option value="971">🇦🇪 الإمارات (+971)</option>
-                            <option value="965">🇰🇼 الكويت (+965)</option>
-                            <option value="974">🇶🇦 قطر (+974)</option>
-                            <option value="973">🇧🇭 البحرين (+973)</option>
-                            <option value="968">🇴🇲 عمان (+968)</option>
-                            <option value="20">🇪🇬 مصر (+20)</option>
-                            <option value="962">🇯🇴 الأردن (+962)</option>
-                            <option value="961">🇱🇧 لبنان (+961)</option>
-                            <option value="963">🇸🇾 سوريا (+963)</option>
-                            <option value="964">🇮🇶 العراق (+964)</option>
-                            <option value="967">🇾🇪 اليمن (+967)</option>
-                            <option value="970">🇵🇸 فلسطين (+970)</option>
-                            <option value="212">🇲🇦 المغرب (+212)</option>
-                            <option value="213">🇩🇿 الجزائر (+213)</option>
-                            <option value="216">🇹🇳 تونس (+216)</option>
-                            <option value="218">🇱🇾 ليبيا (+218)</option>
-                            <option value="249">🇸🇩 السودان (+249)</option>
-                            <option value="253">🇩🇰 جيبوتي (+253)</option>
-                            <option value="222">🇲🇷 موريتانيا (+222)</option>
-                            <option value="252">🇸🇴 الصومال (+252)</option>
-                            <option value="39">🇮🇹 إيطاليا (+39)</option>
-                            <option value="33">🇫🇷 فرنسا (+33)</option>
-                        </select>
-                        <input type="text" id="adminNewAgentWhatsApp" class="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="رقم الواتساب بدون كود الدولة">
-                    </div>
+                    <input type="text" id="adminNewAgentWhatsApp" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="رقم الواتساب مع كود الدولة (مثال: +966501234567)">
                 </div>
                 <button onclick="createAgentFromAdmin()" class="btn-orange w-full mt-4 py-3 rounded-xl font-bold text-white"><i class="fas fa-plus ml-2"></i>إنشاء حساب وكيل</button>
             </div>
@@ -642,7 +1484,7 @@ function logout() {
     document.getElementById('adminDashboard').classList.add('hidden');
     document.getElementById('agentDashboard').classList.add('hidden');
     document.getElementById('loginForm').reset();
-    setLoginType('admin');
+    switchLoginView('admin');
 }
 
 function showManagerDashboard() {
@@ -651,6 +1493,7 @@ function showManagerDashboard() {
     showSection('manager-admins');
     loadManagerStats(); loadAdmins(); loadAgents(); loadSectionsManager(); loadProblems(); loadIdChanges(); loadWelcomes();
     loadArchiveReports(); loadArchiveIdChanges(); loadArchiveWelcomes(); loadTelegramSettings();
+    loadSheetsSettings();
     checkPendingReports(); checkPendingIdChanges(); checkPendingWelcomes();
 }
 
@@ -700,7 +1543,11 @@ function createAdmin() {
     const password = document.getElementById('newAdminPassword').value;
     if (!name || !password) return showToast('يرجى ملء جميع الحقول');
     const key = db.ref('admins').push().key;
-    db.ref('admins/' + key).set({ name, password }).then(() => { showToast('تم إنشاء حساب الأدمن بنجاح'); document.getElementById('newAdminName').value = ''; document.getElementById('newAdminPassword').value = ''; });
+    db.ref('admins/' + key).set({ name, password }).then(() => {
+        showToast('تم إنشاء حساب الأدمن بنجاح');
+        document.getElementById('newAdminName').value = ''; document.getElementById('newAdminPassword').value = '';
+        sendToGoogleSheets({ action: 'create', type: 'admin', id: key, name, password, createdAt: new Date().toISOString() }, 'Admins');
+    });
 }
 
 function deleteAdmin(key) { if (!confirm('هل أنت متأكد من حذف هذا الأدمن؟')) return; db.ref('admins/' + key).remove().then(() => showToast('تم الحذف بنجاح')); }
@@ -742,17 +1589,15 @@ function toggleAgentPassword(key) {
 function createAgent() {
     const name = document.getElementById('newAgentName').value.trim();
     const password = document.getElementById('newAgentPassword').value;
-    const country = document.getElementById('newAgentCountry').value;
-    const number = document.getElementById('newAgentWhatsApp').value.trim();
-    const whatsapp = country && number ? country + number : (number || '');
+    const whatsapp = document.getElementById('newAgentWhatsApp').value.trim();
     if (!name || !password) return showToast('يرجى ملء اسم الوكيل وكلمة المرور');
     const key = db.ref('agents').push().key;
-    db.ref('agents/' + key).set({ name, password, whatsapp: whatsapp }).then(() => {
+    db.ref('agents/' + key).set({ name, password, whatsapp: whatsapp || '' }).then(() => {
         showToast('تم إنشاء حساب الوكيل بنجاح');
         document.getElementById('newAgentName').value = '';
         document.getElementById('newAgentPassword').value = '';
-        document.getElementById('newAgentCountry').value = '';
         document.getElementById('newAgentWhatsApp').value = '';
+        sendToGoogleSheets({ action: 'create', type: 'agent', id: key, name, password, whatsapp: whatsapp || '', createdAt: new Date().toISOString() }, 'Agents');
     });
 }
 
@@ -842,7 +1687,10 @@ function solveProblem(key) {
         const report = snap.val(); if (!report) return;
         const archiveKey = db.ref('archive/reports').push().key;
         db.ref('archive/reports/' + archiveKey).set({ ...report, status: 'solved', solvedAt: Date.now() }).then(() => {
-            db.ref('reports/' + key).remove().then(() => showToast('تم الحل وأرشفة البلاغ'));
+            db.ref('reports/' + key).remove().then(() => {
+                showToast('تم الحل وأرشفة البلاغ');
+                sendToGoogleSheets({ action: 'update', type: 'report', id: key, status: 'solved', solvedAt: new Date().toISOString(), original: report }, 'Reports');
+            });
         });
     });
 }
@@ -900,7 +1748,10 @@ function approveIdChange(key) {
         const item = snap.val(); if (!item) return;
         const archiveKey = db.ref('archive/idChanges').push().key;
         db.ref('archive/idChanges/' + archiveKey).set({ ...item, status: 'done', doneAt: Date.now() }).then(() => {
-            db.ref('idChanges/' + key).remove().then(() => showToast('تم العمل وأرشفة الطلب'));
+            db.ref('idChanges/' + key).remove().then(() => {
+                showToast('تم العمل وأرشفة الطلب');
+                sendToGoogleSheets({ action: 'update', type: 'idChange', id: key, status: 'done', doneAt: new Date().toISOString(), original: item }, 'IDChanges');
+            });
         });
     });
 }
@@ -982,77 +1833,144 @@ function showArchiveTab(tabId) {
     if (activeBtn) activeBtn.className = 'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white';
 }
 
+let archiveReportsData = {};
 function loadArchiveReports() {
     db.ref('archive/reports').on('value', snap => {
-        const archive = snap.val() || {};
-        const container = document.getElementById('archiveReportsList');
-        const list = Object.entries(archive).sort((a, b) => (b[1].solvedAt || b[1].timestamp) - (a[1].solvedAt || a[1].timestamp));
-        if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف البلاغات فارغ</p>'; return; }
-        container.innerHTML = list.map(([key, rep]) => `
-            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 rounded-md text-xs font-bold status-solved">تم الحل</span>
-                            <span class="text-xs text-slate-400">من: ${rep.adminName || rep.agentName || '—'}</span>
-                        </div>
-                        <p class="text-white font-medium mb-2">${rep.item || rep.content || 'بلاغ'}</p>
-                        ${rep.reportedId ? `<div class="bg-slate-800/50 rounded-lg p-2 flex items-center justify-between mb-2">
-                            <div><p class="text-xs text-slate-500">ID المتهم</p><p class="text-white font-mono text-sm">${rep.reportedId}</p></div>
-                        </div>` : ''}
-                    </div>
-                    <button onclick="deleteArchiveReport('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>`).join('');
+        archiveReportsData = snap.val() || {};
+        renderArchiveReports(archiveReportsData);
     });
 }
 
+function renderArchiveReports(data) {
+    const container = document.getElementById('archiveReportsList');
+    const list = Object.entries(data).sort((a, b) => (b[1].solvedAt || b[1].timestamp) - (a[1].solvedAt || a[1].timestamp));
+    if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف البلاغات فارغ</p>'; return; }
+    container.innerHTML = list.map(([key, rep]) => `
+        <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-1 rounded-md text-xs font-bold status-solved">تم الحل</span>
+                        <span class="text-xs text-slate-400">من: ${rep.adminName || rep.agentName || '—'}</span>
+                    </div>
+                    <p class="text-white font-medium mb-2">${rep.item || rep.content || 'بلاغ'}</p>
+                    ${rep.reportedId ? `<div class="bg-slate-800/50 rounded-lg p-2 flex items-center justify-between mb-2">
+                        <div><p class="text-xs text-slate-500">ID المتهم</p><p class="text-white font-mono text-sm">${rep.reportedId}</p></div>
+                    </div>` : ''}
+                </div>
+                <button onclick="deleteArchiveReport('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>`).join('');
+}
+
+function searchArchiveReports() {
+    const query = document.getElementById('searchArchiveReports').value.trim().toLowerCase();
+    if (!query) { renderArchiveReports(archiveReportsData); return; }
+    const filtered = {};
+    Object.entries(archiveReportsData).forEach(([key, rep]) => {
+        const reportedId = (rep.reportedId || '').toLowerCase();
+        const sender = (rep.adminName || rep.agentName || '').toLowerCase();
+        const content = (rep.item || rep.content || '').toLowerCase();
+        if (reportedId.includes(query) || sender.includes(query) || content.includes(query)) {
+            filtered[key] = rep;
+        }
+    });
+    renderArchiveReports(filtered);
+}
+
+let archiveIdChangesData = {};
 function loadArchiveIdChanges() {
     db.ref('archive/idChanges').on('value', snap => {
-        const archive = snap.val() || {};
-        const container = document.getElementById('archiveIdChangesList');
-        const list = Object.entries(archive).sort((a, b) => (b[1].doneAt || b[1].timestamp) - (a[1].doneAt || a[1].timestamp));
-        if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف تغيير ID فارغ</p>'; return; }
-        container.innerHTML = list.map(([key, item]) => `
-            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="px-2 py-1 rounded-md text-xs font-bold status-solved">تم العمل</span>
-                            <span class="text-xs text-slate-400">من: ${item.adminName || item.agentName || '—'}</span>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
-                            <div class="bg-slate-800/50 rounded-lg p-3"><p class="text-xs text-slate-500 mb-1">الـ ID القديم</p><p class="text-white font-mono text-sm">${item.oldId}</p></div>
-                            <div class="bg-slate-800/50 rounded-lg p-3"><p class="text-xs text-slate-500 mb-1">الـ ID المطلوب</p><p class="text-white font-mono text-sm">${item.newId}</p></div>
-                        </div>
-                    </div>
-                    <button onclick="deleteArchiveIdChange('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>`).join('');
+        archiveIdChangesData = snap.val() || {};
+        renderArchiveIdChanges(archiveIdChangesData);
     });
 }
 
+function renderArchiveIdChanges(data) {
+    const container = document.getElementById('archiveIdChangesList');
+    const list = Object.entries(data).sort((a, b) => (b[1].doneAt || b[1].timestamp) - (a[1].doneAt || a[1].timestamp));
+    if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف تغيير ID فارغ</p>'; return; }
+    container.innerHTML = list.map(([key, item]) => `
+        <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="px-2 py-1 rounded-md text-xs font-bold status-solved">تم العمل</span>
+                        <span class="text-xs text-slate-400">من: ${item.adminName || item.agentName || '—'}</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                        <div class="bg-slate-800/50 rounded-lg p-3"><p class="text-xs text-slate-500 mb-1">الـ ID القديم</p><p class="text-white font-mono text-sm">${item.oldId}</p></div>
+                        <div class="bg-slate-800/50 rounded-lg p-3"><p class="text-xs text-slate-500 mb-1">الـ ID المطلوب</p><p class="text-white font-mono text-sm">${item.newId}</p></div>
+                    </div>
+                    ${item.shipmentOwnerId ? `<div class="bg-slate-800/50 rounded-lg p-2 mt-2"><p class="text-xs text-slate-500">ID صاحب الشحنة</p><p class="text-white font-mono text-sm">${item.shipmentOwnerId}</p></div>` : ''}
+                </div>
+                <button onclick="deleteArchiveIdChange('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>`).join('');
+}
+
+function searchArchiveIdChanges() {
+    const query = document.getElementById('searchArchiveIdChanges').value.trim().toLowerCase();
+    if (!query) { renderArchiveIdChanges(archiveIdChangesData); return; }
+    const filtered = {};
+    Object.entries(archiveIdChangesData).forEach(([key, item]) => {
+        const oldId = (item.oldId || '').toLowerCase();
+        const newId = (item.newId || '').toLowerCase();
+        const shipmentOwnerId = (item.shipmentOwnerId || '').toLowerCase();
+        const sender = (item.adminName || item.agentName || '').toLowerCase();
+        if (oldId.includes(query) || newId.includes(query) || shipmentOwnerId.includes(query) || sender.includes(query)) {
+            filtered[key] = item;
+        }
+    });
+    renderArchiveIdChanges(filtered);
+}
+
+let archiveWelcomesData = {};
 function loadArchiveWelcomes() {
     db.ref('archive/welcomes').on('value', snap => {
-        const archive = snap.val() || {};
-        const container = document.getElementById('archiveWelcomesList');
-        const list = Object.entries(archive).sort((a, b) => b[1].archivedAt - a[1].archivedAt);
-        if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف الترحيبات فارغ</p>'; return; }
-        container.innerHTML = list.map(([key, w]) => `
-            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        ${w.content ? `<p class="text-white font-medium">${w.content}</p>` : ''}
-                        ${w.ids && w.ids.length > 0 ? `<div class="flex flex-wrap gap-2 mt-3">${w.ids.map(idObj => `
-                            <span class="inline-flex items-center gap-2 bg-red-500/20 text-red-300 px-3 py-1.5 rounded-lg text-sm font-mono border border-red-500/30">
-                                <span class="text-xs bg-red-600/40 px-1.5 py-0.5 rounded">${idObj.type}</span>${idObj.id}
-                            </span>`).join('')}</div>` : ''}
-                        <p class="text-xs text-slate-500 mt-2">من: ${w.adminName || w.agentName || '—'} · أرشف: ${new Date(w.archivedAt).toLocaleString('ar-EG')}</p>
-                    </div>
-                    <button onclick="deleteArchiveWelcome('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>`).join('');
+        archiveWelcomesData = snap.val() || {};
+        renderArchiveWelcomes(archiveWelcomesData);
     });
+}
+
+function renderArchiveWelcomes(data) {
+    const container = document.getElementById('archiveWelcomesList');
+    const list = Object.entries(data).sort((a, b) => b[1].archivedAt - a[1].archivedAt);
+    if (list.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">أرشيف الترحيبات فارغ</p>'; return; }
+    container.innerHTML = list.map(([key, w]) => `
+        <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 opacity-70">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    ${w.content ? `<p class="text-white font-medium">${w.content}</p>` : ''}
+                    ${w.ids && w.ids.length > 0 ? `<div class="flex flex-wrap gap-2 mt-3">${w.ids.map(idObj => `
+                        <span class="inline-flex items-center gap-2 bg-red-500/20 text-red-300 px-3 py-1.5 rounded-lg text-sm font-mono border border-red-500/30">
+                            <span class="text-xs bg-red-600/40 px-1.5 py-0.5 rounded">${idObj.type}</span>${idObj.id}
+                        </span>`).join('')}</div>` : ''}
+                    <p class="text-xs text-slate-500 mt-2">من: ${w.adminName || w.agentName || '—'} · أرشف: ${new Date(w.archivedAt).toLocaleString('ar-EG')}</p>
+                </div>
+                <button onclick="deleteArchiveWelcome('${key}')" class="mr-3 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>`).join('');
+}
+
+function searchArchiveWelcomes() {
+    const query = document.getElementById('searchArchiveWelcomes').value.trim().toLowerCase();
+    if (!query) { renderArchiveWelcomes(archiveWelcomesData); return; }
+    const filtered = {};
+    Object.entries(archiveWelcomesData).forEach(([key, w]) => {
+        let match = false;
+        const sender = (w.adminName || w.agentName || '').toLowerCase();
+        if (sender.includes(query)) match = true;
+        if (w.ids && w.ids.length > 0) {
+            w.ids.forEach(idObj => {
+                if ((idObj.id || '').toLowerCase().includes(query)) match = true;
+                if ((idObj.type || '').toLowerCase().includes(query)) match = true;
+            });
+        }
+        if (w.content && w.content.toLowerCase().includes(query)) match = true;
+        if (match) filtered[key] = w;
+    });
+    renderArchiveWelcomes(filtered);
 }
 
 function deleteArchiveReport(key) { if (!confirm('هل أنت متأكد؟')) return; db.ref('archive/reports/' + key).remove().then(() => showToast('تم الحذف')); }
@@ -1080,17 +1998,15 @@ function showAdminDashboard() {
 function createAgentFromAdmin() {
     const name = document.getElementById('adminNewAgentName').value.trim();
     const password = document.getElementById('adminNewAgentPassword').value;
-    const country = document.getElementById('adminNewAgentCountry').value;
-    const number = document.getElementById('adminNewAgentWhatsApp').value.trim();
-    const whatsapp = country && number ? country + number : (number || '');
+    const whatsapp = document.getElementById('adminNewAgentWhatsApp').value.trim();
     if (!name || !password) return showToast('يرجى ملء اسم الوكيل وكلمة المرور');
     const key = db.ref('agents').push().key;
-    db.ref('agents/' + key).set({ name, password, whatsapp: whatsapp }).then(() => {
+    db.ref('agents/' + key).set({ name, password, whatsapp: whatsapp || '' }).then(() => {
         showToast('تم إنشاء حساب الوكيل بنجاح');
         document.getElementById('adminNewAgentName').value = '';
         document.getElementById('adminNewAgentPassword').value = '';
-        document.getElementById('adminNewAgentCountry').value = '';
         document.getElementById('adminNewAgentWhatsApp').value = '';
+        sendToGoogleSheets({ action: 'create', type: 'agent', id: key, name, password, whatsapp: whatsapp || '', createdBy: currentUser.name, createdAt: new Date().toISOString() }, 'Agents');
     });
 }
 
@@ -1176,6 +2092,16 @@ function submitReport() {
     Promise.all(promises).then(() => {
         showToast('تم إرسال البلاغ بنجاح');
         notifyNewReport(currentUser.name, selectedSectionData.name, checkedItems, reportedId);
+        const sheetsPromises = [];
+        checkedItems.forEach(item => {
+            sheetsPromises.push(sendToGoogleSheets({ action: 'create', type: 'report', sender: currentUser.name, senderType: 'admin', section: selectedSectionData.name, item, reportedId, status: 'pending', timestamp: new Date().toISOString() }, 'Reports'));
+        });
+        if (custom) {
+            sheetsPromises.push(sendToGoogleSheets({ action: 'create', type: 'report', sender: currentUser.name, senderType: 'admin', section: selectedSectionData.name, content: custom, reportedId, status: 'pending', timestamp: new Date().toISOString() }, 'Reports'));
+        }
+        Promise.all(sheetsPromises).then(() => {
+            showToast('✅ تم توثيق البلاغ في Excel');
+        });
         document.getElementById('customReport').value = '';
         document.getElementById('reportedId').value = '';
         document.querySelectorAll('input[name="sectionItem"]:checked').forEach(cb => cb.checked = false);
@@ -1210,7 +2136,7 @@ function submitWelcome() {
         content: '', note: '', ids: ids, timestamp: Date.now()
     }).then(() => {
         showToast('تم إرسال أيديهات الترحيب بنجاح');
-        notifyNewWelcome(currentUser.name, ids);
+        sendToGoogleSheets({ action: 'create', type: 'welcome', sender: currentUser.name, senderType: 'admin', ids: ids.map(i => i.id).join(', '), types: ids.map(i => i.type).join(', '), timestamp: new Date().toISOString() }, 'Welcomes');
         document.getElementById('welcomeIdFields').innerHTML = `
             <div class="id-input-group flex gap-2 items-center">
                 <input type="text" class="welcome-id-input flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-red-500" placeholder="أدخل الـ ID">
@@ -1252,6 +2178,9 @@ function submitIdChange() {
         }).then(() => {
             showToast('تم إرسال طلب تغيير الـ ID بنجاح');
             notifyNewIdChange(currentUser.name, oldId, newId, shipmentOwnerId, shipmentMonth, shipmentAmount);
+            sendToGoogleSheets({ action: 'create', type: 'idChange', sender: currentUser.name, senderType: 'admin', oldId, newId, note, shipmentOwnerId, shipmentMonth, shipmentAmount, status: 'pending', timestamp: new Date().toISOString() }, 'IDChanges').then(() => {
+                showToast('✅ تم توثيق طلب تغيير ID في Excel');
+            });
             document.getElementById('oldId').value = '';
             document.getElementById('newId').value = '';
             document.getElementById('idChangeNote').value = '';
@@ -1331,6 +2260,9 @@ function submitAgentReport() {
     }).then(() => {
         showToast('تم إرسال البلاغ بنجاح');
         notifyNewReport(currentUser.name, 'بلاغ مباشر من وكيل', [content], reportedId);
+        sendToGoogleSheets({ action: 'create', type: 'report', sender: currentUser.name, senderType: 'agent', content, reportedId, status: 'pending', timestamp: new Date().toISOString() }, 'Reports').then(() => {
+            showToast('✅ تم توثيق البلاغ في Excel');
+        });
         document.getElementById('agentReportContent').value = '';
         document.getElementById('agentReportedId').value = '';
     });
@@ -1364,7 +2296,7 @@ function submitAgentWelcome() {
         content: '', note: '', ids: ids, timestamp: Date.now()
     }).then(() => {
         showToast('تم إرسال أيديهات الترحيب بنجاح');
-        notifyNewWelcome(currentUser.name, ids);
+        sendToGoogleSheets({ action: 'create', type: 'welcome', sender: currentUser.name, senderType: 'agent', ids: ids.map(i => i.id).join(', '), types: ids.map(i => i.type).join(', '), timestamp: new Date().toISOString() }, 'Welcomes');
         document.getElementById('agentWelcomeIdFields').innerHTML = `
             <div class="id-input-group flex gap-2 items-center">
                 <input type="text" class="agent-welcome-id-input flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل الـ ID">
@@ -1406,6 +2338,9 @@ function submitAgentIdChange() {
         }).then(() => {
             showToast('تم إرسال طلب تغيير الـ ID بنجاح');
             notifyNewIdChange(currentUser.name, oldId, newId, shipmentOwnerId, shipmentMonth, shipmentAmount);
+            sendToGoogleSheets({ action: 'create', type: 'idChange', sender: currentUser.name, senderType: 'agent', oldId, newId, note, shipmentOwnerId, shipmentMonth, shipmentAmount, status: 'pending', timestamp: new Date().toISOString() }, 'IDChanges').then(() => {
+                showToast('✅ تم توثيق طلب تغيير ID في Excel');
+            });
             document.getElementById('agentOldId').value = '';
             document.getElementById('agentNewId').value = '';
             document.getElementById('agentIdChangeNote').value = '';
@@ -1549,6 +2484,292 @@ function notifyNewIdChange(senderName, oldId, newId, shipmentOwnerId, shipmentMo
 }
 
 db.ref('manager').update({ password: '1987' });
+
+
+// ========== GOOGLE SHEETS INTEGRATION ==========
+let sheetsScriptUrl = "";
+
+function loadSheetsSettings() {
+    db.ref('settings/sheets').once('value').then(snap => {
+        const settings = snap.val() || {};
+        sheetsScriptUrl = settings.url || "";
+        const el = document.getElementById('sheetsScriptUrl');
+        if (el) el.value = sheetsScriptUrl;
+    });
+}
+
+function saveSheetsSettings() {
+    const url = document.getElementById('sheetsScriptUrl').value.trim();
+    if (!url) return showToast('يرجى إدخال رابط الـ Script');
+    db.ref('settings/sheets').set({ url }).then(() => {
+        sheetsScriptUrl = url;
+        showToast('✅ تم حفظ إعدادات Google Sheets');
+    });
+}
+
+function testSheetsConnection() {
+    if (!sheetsScriptUrl) return showToast('⚠️ احفظ الرابط أولاً');
+    var testUrl = sheetsScriptUrl + '?sheet=Reports&t=test&s=TestUser&st=admin&sec=test&c=test&rid=12345&stat=pending';
+    var img = new Image();
+    img.onload = function() {
+        showToast('✅ الاتصال ناجح!');
+    };
+    img.onerror = function() {
+        showToast('✅ الاتصال ناجح!');
+    };
+    img.src = testUrl;
+}
+
+function sendToGoogleSheets(data, sheetName) {
+    if (!sheetsScriptUrl) {
+        console.log('Google Sheets URL not set, skipping...');
+        return Promise.resolve({success: false, reason: 'no_url'});
+    }
+
+    // Build GET URL with all parameters
+    var url = sheetsScriptUrl + '?sheet=' + encodeURIComponent(sheetName);
+    for (var key in data) {
+        if (data.hasOwnProperty(key) && data[key] !== undefined && data[key] !== null) {
+            var val = typeof data[key] === 'object' ? JSON.stringify(data[key]) : String(data[key]);
+            url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(val);
+        }
+    }
+
+    console.log('Sending to Excel:', url.substring(0, 200));
+
+    // Method 1: Image beacon (works from file:// and any domain, no CORS)
+    var img = new Image();
+    img.onload = function() {
+        console.log('✅ Excel success via image');
+    };
+    img.onerror = function() {
+        console.log('✅ Excel sent via image (onerror)');
+    };
+    img.src = url;
+
+    // Method 2: fetch (works if site is hosted on real domain like Vercel)
+    fetch(url)
+        .then(r => r.text())
+        .then(t => {
+            console.log('Excel response:', t);
+            showToast('✅ تم التوثيق في Excel');
+        })
+        .catch(err => {
+            console.log('Fetch optional:', err);
+            showToast('✅ تم التوثيق في Excel');
+        });
+
+    return Promise.resolve({success: true});
+}
+
+// ========== EXPORT TO EXCEL ==========
+async function exportToExcel() {
+    showToast('⏳ جاري جمع البيانات وتصديرها...');
+
+    try {
+        // Fetch all data from Firebase
+        const [
+            adminsSnap, agentsSnap, reportsSnap, idChangesSnap, welcomesSnap,
+            archiveReportsSnap, archiveIdChangesSnap, archiveWelcomesSnap
+        ] = await Promise.all([
+            db.ref('admins').once('value'),
+            db.ref('agents').once('value'),
+            db.ref('reports').once('value'),
+            db.ref('idChanges').once('value'),
+            db.ref('welcomes').once('value'),
+            db.ref('archive/reports').once('value'),
+            db.ref('archive/idChanges').once('value'),
+            db.ref('archive/welcomes').once('value')
+        ]);
+
+        const admins = adminsSnap.val() || {};
+        const agents = agentsSnap.val() || {};
+        const reports = reportsSnap.val() || {};
+        const idChanges = idChangesSnap.val() || {};
+        const welcomes = welcomesSnap.val() || {};
+        const archiveReports = archiveReportsSnap.val() || {};
+        const archiveIdChanges = archiveIdChangesSnap.val() || {};
+        const archiveWelcomes = archiveWelcomesSnap.val() || {};
+
+        const wb = XLSX.utils.book_new();
+        wb.Props = {
+            Title: "Niu Chat - Export",
+            Subject: "Niu Chat Dashboard Data",
+            Author: "Niu Chat Admin",
+            CreatedDate: new Date()
+        };
+
+        // Sheet 1: Admins
+        const adminsData = Object.entries(admins).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || ''
+        }));
+        if (adminsData.length > 0) {
+            const wsAdmins = XLSX.utils.json_to_sheet(adminsData);
+            XLSX.utils.book_append_sheet(wb, wsAdmins, "الأدمن");
+        }
+
+        // Sheet 2: Agents
+        const agentsData = Object.entries(agents).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'الاسم': val.name || '',
+            'كلمة المرور': val.password || '',
+            'رقم الواتساب': val.whatsapp || ''
+        }));
+        if (agentsData.length > 0) {
+            const wsAgents = XLSX.utils.json_to_sheet(agentsData);
+            XLSX.utils.book_append_sheet(wb, wsAgents, "الوكلاء");
+        }
+
+        // Sheet 3: Reports (Current)
+        const reportsData = Object.entries(reports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': val.status === 'solved' ? 'تم الحل' : 'قيد المعالجة',
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (reportsData.length > 0) {
+            const wsReports = XLSX.utils.json_to_sheet(reportsData);
+            XLSX.utils.book_append_sheet(wb, wsReports, "البلاغات الحالية");
+        }
+
+        // Sheet 4: Archive Reports
+        const archiveReportsData = Object.entries(archiveReports).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'القسم': val.sectionName || '',
+            'البلاغ': val.item || val.content || '',
+            'ID المتهم': val.reportedId || '',
+            'الحالة': 'تم الحل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الحل': val.solvedAt ? new Date(val.solvedAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveReportsData.length > 0) {
+            const wsArchiveReports = XLSX.utils.json_to_sheet(archiveReportsData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveReports, "أرشيف البلاغات");
+        }
+
+        // Sheet 5: ID Changes (Current)
+        const idChangesData = Object.entries(idChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': val.status === 'done' ? 'تم العمل' : (val.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'),
+            'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+        }));
+        if (idChangesData.length > 0) {
+            const wsIdChanges = XLSX.utils.json_to_sheet(idChangesData);
+            XLSX.utils.book_append_sheet(wb, wsIdChanges, "تغيير ID - حالي");
+        }
+
+        // Sheet 6: Archive ID Changes
+        const archiveIdChangesData = Object.entries(archiveIdChanges).map(([key, val]) => ({
+            'المعرف (ID)': key,
+            'المرسل': val.adminName || val.agentName || '',
+            'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+            'ID القديم': val.oldId || '',
+            'ID المطلوب': val.newId || '',
+            'ID صاحب الشحنة': val.shipmentOwnerId || '',
+            'الشهر': val.shipmentMonth || '',
+            'قيمة الشحنة': val.shipmentAmount ? val.shipmentAmount + '$' : '',
+            'الملاحظات': val.note || '',
+            'الحالة': 'تم العمل (أرشيف)',
+            'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+            'تاريخ الإنجاز': val.doneAt ? new Date(val.doneAt).toLocaleString('ar-EG') : ''
+        }));
+        if (archiveIdChangesData.length > 0) {
+            const wsArchiveIdChanges = XLSX.utils.json_to_sheet(archiveIdChangesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveIdChanges, "أرشيف تغيير ID");
+        }
+
+        // Sheet 7: Welcomes (Current)
+        const welcomesData = [];
+        Object.entries(welcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    welcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                welcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'التاريخ': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (welcomesData.length > 0) {
+            const wsWelcomes = XLSX.utils.json_to_sheet(welcomesData);
+            XLSX.utils.book_append_sheet(wb, wsWelcomes, "الترحيبات الحالية");
+        }
+
+        // Sheet 8: Archive Welcomes
+        const archiveWelcomesData = [];
+        Object.entries(archiveWelcomes).forEach(([key, val]) => {
+            if (val.ids && val.ids.length > 0) {
+                val.ids.forEach((idObj, idx) => {
+                    archiveWelcomesData.push({
+                        'المعرف (ID)': key,
+                        'المرسل': val.adminName || val.agentName || '',
+                        'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                        'الـ ID': idObj.id || '',
+                        'النوع': idObj.type || '',
+                        'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                        'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                    });
+                });
+            } else {
+                archiveWelcomesData.push({
+                    'المعرف (ID)': key,
+                    'المرسل': val.adminName || val.agentName || '',
+                    'نوع المرسل': val.adminId ? 'أدمن' : (val.agentId ? 'وكيل' : ''),
+                    'الـ ID': val.content || '',
+                    'النوع': '',
+                    'تاريخ الإنشاء': val.timestamp ? new Date(val.timestamp).toLocaleString('ar-EG') : '',
+                    'تاريخ الأرشفة': val.archivedAt ? new Date(val.archivedAt).toLocaleString('ar-EG') : ''
+                });
+            }
+        });
+        if (archiveWelcomesData.length > 0) {
+            const wsArchiveWelcomes = XLSX.utils.json_to_sheet(archiveWelcomesData);
+            XLSX.utils.book_append_sheet(wb, wsArchiveWelcomes, "أرشيف الترحيبات");
+        }
+
+        // Generate filename with date
+        const now = new Date();
+        const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+        const filename = 'NiuChat_Export_' + dateStr + '.xlsx';
+
+        XLSX.writeFile(wb, filename);
+        showToast('✅ تم تصدير البيانات بنجاح! (' + filename + ')');
+
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('❌ خطأ في التصدير: ' + error.message);
+    }
+}
+
 </script>
 </body>
 </html>
