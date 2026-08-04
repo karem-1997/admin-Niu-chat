@@ -1239,135 +1239,496 @@ async function exportToExcel() {
 
 </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         * { font-family: 'Cairo', sans-serif; }
+
+        /* ===== ANIMATED MESH BACKGROUND ===== */
         body {
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            background: #0a0a1a;
             background-attachment: fixed;
             min-height: 100vh;
+            overflow-x: hidden;
         }
+
         body::before {
             content: '';
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: 
-                radial-gradient(ellipse at 20% 80%, rgba(120, 50, 180, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(220, 38, 38, 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(60, 20, 100, 0.08) 0%, transparent 70%);
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(120, 50, 220, 0.25) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(220, 38, 80, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(60, 20, 150, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 10% 90%, rgba(255, 100, 50, 0.1) 0%, transparent 40%);
+            z-index: -2;
+            pointer-events: none;
+            animation: meshMove 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes meshMove {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(2deg); }
+            100% { transform: scale(1) rotate(-1deg); }
+        }
+
+        /* Floating particles */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.03) 0%, transparent 8%),
+                radial-gradient(circle at 70% 60%, rgba(255,255,255,0.02) 0%, transparent 6%),
+                radial-gradient(circle at 40% 80%, rgba(255,255,255,0.025) 0%, transparent 10%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.02) 0%, transparent 7%),
+                radial-gradient(circle at 10% 70%, rgba(255,255,255,0.02) 0%, transparent 5%);
             z-index: -1;
             pointer-events: none;
+            animation: particlesFloat 15s ease-in-out infinite;
         }
+
+        @keyframes particlesFloat {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.8; }
+            33% { transform: translateY(-20px) translateX(10px); opacity: 1; }
+            66% { transform: translateY(10px) translateX(-15px); opacity: 0.6; }
+        }
+
+        /* ===== GLASSMORPHISM ===== */
         .glass {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255,255,255,0.05),
+                0 0 0 1px rgba(255,255,255,0.02);
+            position: relative;
+            overflow: hidden;
         }
+
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+            transition: left 0.7s ease;
+            pointer-events: none;
+        }
+
+        .glass:hover::before {
+            left: 100%;
+        }
+
         .gradient-text {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a6f, #c44569);
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f, #c44569, #ff9f43);
+            background-size: 300% 300%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease infinite;
         }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* ===== CARDS WITH 3D HOVER ===== */
         .card-hover { 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            perspective: 1000px;
         }
         .card-hover:hover { 
-            transform: translateY(-6px); 
-            box-shadow: 0 25px 50px rgba(220, 38, 38, 0.15), 0 0 0 1px rgba(255,255,255,0.05); 
+            transform: translateY(-8px) rotateX(2deg) rotateY(-2deg); 
+            box-shadow: 
+                0 25px 50px rgba(220, 38, 38, 0.2), 
+                0 0 0 1px rgba(255,255,255,0.08),
+                0 0 40px rgba(255, 71, 87, 0.1);
+            border-color: rgba(255, 71, 87, 0.2);
         }
+
+        /* ===== ANIMATED BUTTONS ===== */
         .btn-primary {
-            background: linear-gradient(135deg, #ff4757, #c0392b);
-            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #ff4757, #c0392b, #ff6b6b);
+            background-size: 200% 200%;
+            box-shadow: 0 4px 20px rgba(255, 71, 87, 0.35), 0 0 0 1px rgba(255,71,87,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
         }
         .btn-primary:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4); 
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 12px 35px rgba(255, 71, 87, 0.5), 0 0 0 1px rgba(255,71,87,0.3);
+            background-position: 100% 0;
         }
+        .btn-primary:active::after {
+            width: 300px; height: 300px;
+        }
+
         .btn-orange {
-            background: linear-gradient(135deg, #ff9f43, #ee5a24);
-            box-shadow: 0 4px 15px rgba(255, 159, 67, 0.3);
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #ff9f43, #ee5a24, #ff7f50);
+            background-size: 200% 200%;
+            box-shadow: 0 4px 20px rgba(255, 159, 67, 0.35), 0 0 0 1px rgba(255,159,67,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-orange::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
         }
         .btn-orange:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 8px 25px rgba(255, 159, 67, 0.4); 
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 12px 35px rgba(255, 159, 67, 0.5), 0 0 0 1px rgba(255,159,67,0.3);
+            background-position: 100% 0;
         }
+        .btn-orange:active::after {
+            width: 300px; height: 300px;
+        }
+
+        /* ===== STATUS BADGES WITH GLOW ===== */
         .status-pending { 
-            background: rgba(255, 71, 87, 0.15); 
+            background: rgba(255, 71, 87, 0.12); 
             color: #ff6b81; 
-            border: 1px solid rgba(255, 71, 87, 0.25); 
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            box-shadow: 0 0 10px rgba(255, 71, 87, 0.1);
+            animation: pulseRed 2s ease-in-out infinite;
         }
         .status-solved { 
-            background: rgba(46, 213, 115, 0.15); 
+            background: rgba(46, 213, 115, 0.12); 
             color: #2ed573; 
-            border: 1px solid rgba(46, 213, 115, 0.25); 
+            border: 1px solid rgba(46, 213, 115, 0.3);
+            box-shadow: 0 0 10px rgba(46, 213, 115, 0.1);
         }
         .status-rejected { 
-            background: rgba(255, 71, 87, 0.2); 
+            background: rgba(255, 71, 87, 0.18); 
             color: #ff7675; 
-            border: 1px solid rgba(255, 71, 87, 0.3); 
+            border: 1px solid rgba(255, 71, 87, 0.4);
+            box-shadow: 0 0 10px rgba(255, 71, 87, 0.15);
         }
+
+        @keyframes pulseRed {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 71, 87, 0.1); }
+            50% { box-shadow: 0 0 20px rgba(255, 71, 87, 0.25); }
+        }
+
+        /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff4757, #c0392b); border-radius: 3px; }
-        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(20px); } 
-            to { opacity: 1; transform: translateY(0); } 
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, #ff4757, #c0392b); 
+            border-radius: 3px;
+            box-shadow: 0 0 6px rgba(255, 71, 87, 0.3);
         }
+
+        /* ===== ENTRANCE ANIMATIONS ===== */
+        .fade-in { 
+            animation: fadeInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            opacity: 0;
+        }
+        @keyframes fadeInUp { 
+            from { opacity: 0; transform: translateY(30px) scale(0.98); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+
+        .fade-in-delay-1 { animation-delay: 0.1s; }
+        .fade-in-delay-2 { animation-delay: 0.2s; }
+        .fade-in-delay-3 { animation-delay: 0.3s; }
+        .fade-in-delay-4 { animation-delay: 0.4s; }
+
+        /* ===== TOAST WITH GLASS ===== */
         .toast {
-            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-            background: rgba(20, 20, 40, 0.95); 
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: rgba(20, 20, 40, 0.85); 
             color: white; 
             padding: 14px 28px; 
             border-radius: 16px;
             border: 1px solid rgba(255, 71, 87, 0.3); 
             z-index: 9999; 
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            animation: toastSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px rgba(255, 71, 87, 0.1);
         }
-        @keyframes slideUp { 
-            from { opacity: 0; transform: translate(-50%, 30px); } 
-            to { opacity: 1; transform: translate(-50%, 0); } 
+        @keyframes toastSlideUp { 
+            from { opacity: 0; transform: translate(-50%, 30px) scale(0.95); } 
+            to { opacity: 1; transform: translate(-50%, 0) scale(1); } 
         }
-        .id-input-group { animation: fadeIn 0.4s ease; }
+
+        .id-input-group { animation: fadeInUp 0.4s ease forwards; }
         .password-hidden { -webkit-text-security: disc; }
 
-        /* New modern touches */
+        /* ===== MODERN INPUTS WITH GLASS ===== */
         .modern-input {
-            background: rgba(255,255,255,0.05) !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
-            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.04) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
         }
         .modern-input:focus {
-            background: rgba(255,255,255,0.08) !important;
+            background: rgba(255,255,255,0.07) !important;
             border-color: rgba(255, 71, 87, 0.5) !important;
-            box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
-        }
-        .nav-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            transition: all 0.3s ease;
-        }
-        .nav-btn:hover {
-            background: rgba(255,255,255,0.1);
+            box-shadow: 
+                0 0 0 3px rgba(255, 71, 87, 0.1),
+                0 0 20px rgba(255, 71, 87, 0.1),
+                inset 0 1px 2px rgba(0,0,0,0.2);
             transform: translateY(-1px);
         }
-        .stat-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
+
+        /* ===== GLASS NAV CARDS ===== */
+        .nav-btn {
+            background: rgba(255,255,255,0.04);
+            background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 
+                0 4px 15px rgba(0,0,0,0.2),
+                inset 0 1px 0 rgba(255,255,255,0.08);
         }
-        .glow-red { box-shadow: 0 0 20px rgba(255, 71, 87, 0.15); }
-        .glow-orange { box-shadow: 0 0 20px rgba(255, 159, 67, 0.15); }
-        .glow-green { box-shadow: 0 0 20px rgba(46, 213, 115, 0.15); }
-        .glow-blue { box-shadow: 0 0 20px rgba(84, 160, 255, 0.15); }
+        .nav-btn:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.04) 100%);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 
+                0 12px 30px rgba(0,0,0,0.4),
+                0 0 20px rgba(255, 71, 87, 0.15),
+                inset 0 1px 0 rgba(255,255,255,0.12);
+            border-color: rgba(255, 71, 87, 0.3);
+        }
+        .nav-btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+            transition: left 0.6s ease;
+        }
+        .nav-btn:hover::before {
+            left: 100%;
+        }
+        .nav-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 50%;
+            width: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, #ff4757, #ff9f43, transparent);
+            transition: all 0.5s ease;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+        .nav-btn:hover::after {
+            width: 70%;
+        }
+
+        /* Special colored nav buttons */
+        .nav-btn-danger {
+            background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.04) 100%);
+            border-color: rgba(239,68,68,0.2);
+            color: #fca5a5;
+        }
+        .nav-btn-danger:hover {
+            background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.08) 100%);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 25px rgba(239,68,68,0.2);
+            border-color: rgba(239,68,68,0.4);
+        }
+
+        .nav-btn-amber {
+            background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.04) 100%);
+            border-color: rgba(245,158,11,0.2);
+            color: #fcd34d;
+        }
+        .nav-btn-amber:hover {
+            background: linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.08) 100%);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 25px rgba(245,158,11,0.2);
+            border-color: rgba(245,158,11,0.4);
+        }
+
+        .nav-btn-blue {
+            background: linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(59,130,246,0.04) 100%);
+            border-color: rgba(59,130,246,0.2);
+            color: #93c5fd;
+        }
+        .nav-btn-blue:hover {
+            background: linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(59,130,246,0.08) 100%);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 25px rgba(59,130,246,0.2);
+            border-color: rgba(59,130,246,0.4);
+        }
+
+        .nav-btn-green {
+            background: linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(34,197,94,0.04) 100%);
+            border-color: rgba(34,197,94,0.2);
+            color: #86efac;
+        }
+        .nav-btn-green:hover {
+            background: linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(34,197,94,0.08) 100%);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 25px rgba(34,197,94,0.2);
+            border-color: rgba(34,197,94,0.4);
+        }
+
+        .nav-btn-purple {
+            background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(168,85,247,0.04) 100%);
+            border-color: rgba(168,85,247,0.2);
+            color: #d8b4fe;
+        }
+        .nav-btn-purple:hover {
+            background: linear-gradient(135deg, rgba(168,85,247,0.2) 0%, rgba(168,85,247,0.08) 100%);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 25px rgba(168,85,247,0.2);
+            border-color: rgba(168,85,247,0.4);
+        }
+
+        /* ===== STAT CARDS WITH GLOW ===== */
+        .stat-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+
+        /* ===== GLOW UTILITIES ===== */
+        .glow-red { box-shadow: 0 0 30px rgba(255, 71, 87, 0.2); }
+        .glow-orange { box-shadow: 0 0 30px rgba(255, 159, 67, 0.2); }
+        .glow-green { box-shadow: 0 0 30px rgba(46, 213, 115, 0.2); }
+        .glow-blue { box-shadow: 0 0 30px rgba(84, 160, 255, 0.2); }
+
+        /* ===== FLOATING ANIMATION ===== */
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* ===== SHIMMER EFFECT ===== */
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        /* ===== NAV BUTTON STAGGER ANIMATION ===== */
+        @keyframes navPopIn {
+            0% { opacity: 0; transform: translateY(-10px) scale(0.9); }
+            60% { transform: translateY(2px) scale(1.02); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        header .nav-btn, header button[class*="nav-btn"] {
+            animation: navPopIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+        }
+        header .nav-btn:nth-child(1) { animation-delay: 0.05s; }
+        header .nav-btn:nth-child(2) { animation-delay: 0.1s; }
+        header .nav-btn:nth-child(3) { animation-delay: 0.15s; }
+        header .nav-btn:nth-child(4) { animation-delay: 0.2s; }
+        header .nav-btn:nth-child(5) { animation-delay: 0.25s; }
+        header .nav-btn:nth-child(6) { animation-delay: 0.3s; }
+        header .nav-btn:nth-child(7) { animation-delay: 0.35s; }
+        header .nav-btn:nth-child(8) { animation-delay: 0.4s; }
+        header .nav-btn:nth-child(9) { animation-delay: 0.45s; }
+        header .nav-btn:nth-child(10) { animation-delay: 0.5s; }
+        header .nav-btn:nth-child(11) { animation-delay: 0.55s; }
+        header .nav-btn:nth-child(12) { animation-delay: 0.6s; }
+        header .nav-btn:nth-child(13) { animation-delay: 0.65s; }
+
+        /* ===== SECTION REVEAL ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== BADGE PULSE ===== */
+        #badge-reports, #badge-idchanges, #badge-idreturns, #badge-welcomes {
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 5px rgba(239, 68, 68, 0.5); }
+            50% { transform: scale(1.2); box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
+        }
+
+        /* ===== ACCORDION SMOOTH ===== */
+        #statsAccordionContent {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ===== GRADIENT BORDER CARDS ===== */
+        .gradient-border {
+            position: relative;
+            background: rgba(255,255,255,0.02);
+            border-radius: 16px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255,71,87,0.3), rgba(255,159,67,0.2), transparent 60%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
     </style>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
 // ========== ID RETURN SYSTEM ==========
 let archiveIdReturnsData = {};
@@ -1827,7 +2188,7 @@ async function exportToExcel() {
 
 <!-- Manager Dashboard -->
 <div id="managerDashboard" class="hidden min-h-screen">
-    <header class="glass sticky top-0 z-50 border-b border-slate-700/50">
+    <header class="glass sticky top-0 z-50 border-b border-slate-700/50" style="backdrop-filter: blur(30px) saturate(150%);">
         <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-3">
                 <button onclick="logout()" class="w-10 h-10 rounded-xl nav-btn flex items-center justify-center text-slate-300 hover:text-white transition-all border border-slate-700" title="رجوع للبوابة الرئيسية">
@@ -1842,19 +2203,19 @@ async function exportToExcel() {
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <button onclick="showSection('manager-admins')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-users ml-1"></i>الأدمن</button>
-                <button onclick="showSection('manager-agents')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-user-tie ml-1"></i>الوكلاء</button>
-                <button onclick="showSection('manager-sections')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-folder-open ml-1"></i>الأقسام</button>
-                <button onclick="showSection('manager-reports')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all relative"><i class="fas fa-exclamation-triangle ml-1"></i>المشاكل<span id="badge-reports" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
-                <button onclick="showSection('manager-idchanges')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all relative"><i class="fas fa-id-card ml-1"></i>تغيير ID<span id="badge-idchanges" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
-                <button onclick="showSection('manager-welcomes')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all relative"><i class="fas fa-lightbulb ml-1"></i>الترحيبات<span id="badge-welcomes" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
-                <button onclick="showSection('manager-idreturns')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all relative"><i class="fas fa-undo ml-1"></i>ارجاع ID<span id="badge-idreturns" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
-                <button onclick="showSection('manager-archive')" class="px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-sm transition-all"><i class="fas fa-archive ml-1"></i>الأرشيف</button>
-                <button onclick="showSection('manager-clear')" class="px-3 py-2 rounded-lg bg-red-900/40 text-red-400 hover:bg-red-900/60 text-sm transition-all border border-red-500/30"><i class="fas fa-trash-alt ml-1"></i>مسح البيانات</button>
-                <button onclick="showSection('manager-telegram')" class="px-3 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-sm transition-all border border-blue-500/30"><i class="fab fa-telegram ml-1"></i>إعدادات التلجرام</button>
-                <button onclick="exportToExcel()" class="px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-sm transition-all border border-emerald-500/30"><i class="fas fa-file-excel ml-1"></i>تصدير Excel</button>
-                <button onclick="showSection('manager-sheets')" class="px-3 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm transition-all border border-green-500/30"><i class="fas fa-file-excel ml-1"></i>Google Sheets</button>
-                <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
+                <button onclick="showSection('manager-admins')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-users ml-1"></i>الأدمن</button>
+                <button onclick="showSection('manager-agents')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-user-tie ml-1"></i>الوكلاء</button>
+                <button onclick="showSection('manager-sections')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-folder-open ml-1"></i>الأقسام</button>
+                <button onclick="showSection('manager-reports')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all relative"><i class="fas fa-exclamation-triangle ml-1"></i>المشاكل<span id="badge-reports" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
+                <button onclick="showSection('manager-idchanges')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all relative"><i class="fas fa-id-card ml-1"></i>تغيير ID<span id="badge-idchanges" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
+                <button onclick="showSection('manager-welcomes')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all relative"><i class="fas fa-lightbulb ml-1"></i>الترحيبات<span id="badge-welcomes" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
+                <button onclick="showSection('manager-idreturns')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all relative"><i class="fas fa-undo ml-1"></i>ارجاع ID<span id="badge-idreturns" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span></button>
+                <button onclick="showSection('manager-archive')" class="px-3 py-2 rounded-lg nav-btn nav-btn-amber text-sm transition-all"><i class="fas fa-archive ml-1"></i>الأرشيف</button>
+                <button onclick="showSection('manager-clear')" class="px-3 py-2 rounded-lg nav-btn nav-btn-danger text-sm transition-all"><i class="fas fa-trash-alt ml-1"></i>مسح البيانات</button>
+                <button onclick="showSection('manager-telegram')" class="px-3 py-2 rounded-lg nav-btn nav-btn-blue text-sm transition-all"><i class="fab fa-telegram ml-1"></i>إعدادات التلجرام</button>
+                <button onclick="exportToExcel()" class="px-3 py-2 rounded-lg nav-btn nav-btn-green text-sm transition-all"><i class="fas fa-file-excel ml-1"></i>تصدير Excel</button>
+                <button onclick="showSection('manager-sheets')" class="px-3 py-2 rounded-lg nav-btn nav-btn-green text-sm transition-all"><i class="fas fa-file-excel ml-1"></i>Google Sheets</button>
+                <button onclick="logout()" class="px-3 py-2 rounded-lg nav-btn nav-btn-danger text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
             </div>
         </div>
     </header>
@@ -2106,20 +2467,20 @@ async function exportToExcel() {
 
 <!-- Admin Dashboard -->
 <div id="adminDashboard" class="hidden min-h-screen">
-    <header class="glass sticky top-0 z-50 border-b border-slate-700/50">
+    <header class="glass sticky top-0 z-50 border-b border-slate-700/50" style="backdrop-filter: blur(30px) saturate(150%);">
         <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-800 flex items-center justify-center"><i class="fas fa-user-shield text-white"></i></div>
                 <div><h2 class="font-bold text-white">لوحة الأدمن</h2><p class="text-xs text-slate-400" id="adminDisplayName">مرحباً</p></div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <button onclick="showAdminSection('admin-submit')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-paper-plane ml-1"></i>إرسال بلاغ</button>
-                <button onclick="showAdminSection('admin-welcome')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-lightbulb ml-1"></i>طلب ترحيب</button>
-                <button onclick="showAdminSection('admin-idchange')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-id-card ml-1"></i>تغيير ID</button>
-                <button onclick="showAdminSection('admin-idreturn')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-undo ml-1"></i>ارجاع ID</button>
-                <button onclick="showAdminSection('admin-myreports')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-history ml-1"></i>بلاغاتي</button>
-                <button onclick="showAdminSection('admin-agents')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-user-tie ml-1"></i>الوكلاء</button>
-                <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
+                <button onclick="showAdminSection('admin-submit')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-paper-plane ml-1"></i>إرسال بلاغ</button>
+                <button onclick="showAdminSection('admin-welcome')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-lightbulb ml-1"></i>طلب ترحيب</button>
+                <button onclick="showAdminSection('admin-idchange')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-id-card ml-1"></i>تغيير ID</button>
+                <button onclick="showAdminSection('admin-idreturn')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-undo ml-1"></i>ارجاع ID</button>
+                <button onclick="showAdminSection('admin-myreports')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-history ml-1"></i>بلاغاتي</button>
+                <button onclick="showAdminSection('admin-agents')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-user-tie ml-1"></i>الوكلاء</button>
+                <button onclick="logout()" class="px-3 py-2 rounded-lg nav-btn nav-btn-danger text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
             </div>
         </div>
     </header>
@@ -2204,18 +2565,18 @@ async function exportToExcel() {
 
 <!-- Agent Dashboard -->
 <div id="agentDashboard" class="hidden min-h-screen">
-    <header class="glass sticky top-0 z-50 border-b border-slate-700/50">
+    <header class="glass sticky top-0 z-50 border-b border-slate-700/50" style="backdrop-filter: blur(30px) saturate(150%);">
         <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-800 flex items-center justify-center"><i class="fas fa-user-tie text-white"></i></div>
                 <div><h2 class="font-bold text-white">لوحة الوكيل</h2><p class="text-xs text-slate-400" id="agentDisplayName">مرحباً</p></div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <button onclick="showAgentSection('agent-welcome')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-lightbulb ml-1"></i>طلب ترحيب</button>
-                <button onclick="showAgentSection('agent-idchange')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-id-card ml-1"></i>تغيير ID</button>
-                <button onclick="showAgentSection('agent-idreturn')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-undo ml-1"></i>ارجاع ID</button>
-                <button onclick="showAgentSection('agent-myreports')" class="px-3 py-2 rounded-lg nav-btn text-sm transition-all"><i class="fas fa-history ml-1"></i>بلاغاتي</button>
-                <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
+                <button onclick="showAgentSection('agent-welcome')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-lightbulb ml-1"></i>طلب ترحيب</button>
+                <button onclick="showAgentSection('agent-idchange')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-id-card ml-1"></i>تغيير ID</button>
+                <button onclick="showAgentSection('agent-idreturn')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-undo ml-1"></i>ارجاع ID</button>
+                <button onclick="showAgentSection('agent-myreports')" class="px-3 py-2 rounded-xl nav-btn text-sm transition-all"><i class="fas fa-history ml-1"></i>بلاغاتي</button>
+                <button onclick="logout()" class="px-3 py-2 rounded-lg nav-btn nav-btn-danger text-sm transition-all"><i class="fas fa-sign-out-alt ml-1"></i>خروج</button>
             </div>
         </div>
     </header>
