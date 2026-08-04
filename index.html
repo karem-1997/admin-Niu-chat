@@ -2137,7 +2137,6 @@ async function exportToExcel() {
                 <div><h2 class="font-bold text-white">لوحة الوكيل</h2><p class="text-xs text-slate-400" id="agentDisplayName">مرحباً</p></div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <button onclick="showAgentSection('agent-submit')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-paper-plane ml-1"></i>إرسال بلاغ</button>
                 <button onclick="showAgentSection('agent-welcome')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-lightbulb ml-1"></i>طلب ترحيب</button>
                 <button onclick="showAgentSection('agent-idchange')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-id-card ml-1"></i>تغيير ID</button>
                 <button onclick="showAgentSection('agent-idreturn')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-all"><i class="fas fa-undo ml-1"></i>ارجاع ID</button>
@@ -2147,14 +2146,6 @@ async function exportToExcel() {
         </div>
     </header>
     <div class="max-w-7xl mx-auto px-4 py-8">
-        <div id="agent-submit" class="agent-section">
-            <div class="glass rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-paper-plane text-orange-400"></i>إرسال بلاغ</h3>
-                <div class="mb-4"><label class="block text-sm text-slate-400 mb-2">📝 اكتب البلاغ:</label><textarea id="agentReportContent" rows="4" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="اكتب تفاصيل البلاغ هنا..."></textarea></div>
-                <div class="mb-4"><label class="block text-sm text-slate-400 mb-2">🆔 ID اللي عليه الشكوة:</label><input type="text" id="agentReportedId" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500" placeholder="أدخل ID المتهم"></div>
-                <button onclick="submitAgentReport()" class="btn-orange px-8 py-3 rounded-xl font-bold text-white"><i class="fas fa-paper-plane ml-2"></i>إرسال البلاغ</button>
-            </div>
-        </div>
         </div>
         <div id="agent-welcome" class="agent-section hidden">
             <div class="glass rounded-2xl p-6">
@@ -3096,34 +3087,13 @@ function showAgentDashboard() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('agentDashboard').classList.remove('hidden');
     document.getElementById('agentDisplayName').textContent = 'مرحباً، ' + currentUser.name;
-    showAgentSection('agent-submit');
+    showAgentSection('agent-welcome');
     loadAgentMyReports();
 }
 
 function showAgentSection(id) {
     document.querySelectorAll('.agent-section').forEach(el => el.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
-}
-
-function submitAgentReport() {
-    const content = document.getElementById('agentReportContent').value.trim();
-    const reportedId = document.getElementById('agentReportedId').value.trim();
-    if (!content) return showToast('يرجى كتابة البلاغ');
-    if (!reportedId) return showToast('يرجى ملء ID المتهم');
-    const key = db.ref('reports').push().key;
-    db.ref('reports/' + key).set({
-        agentId: currentUser.id, agentName: currentUser.name,
-        content: content, reportedId: reportedId,
-        status: 'pending', timestamp: Date.now()
-    }).then(() => {
-        showToast('تم إرسال البلاغ بنجاح');
-        notifyNewReport(currentUser.name, 'بلاغ مباشر من وكيل', [content], reportedId);
-        sendToGoogleSheets({ action: 'create', type: 'report', sender: currentUser.name, senderType: 'agent', content, reportedId, status: 'pending', timestamp: new Date().toISOString() }, 'Reports').then(() => {
-            showToast('✅ تم توثيق البلاغ في Excel');
-        });
-        document.getElementById('agentReportContent').value = '';
-        document.getElementById('agentReportedId').value = '';
-    });
 }
 
 function addAgentWelcomeIdField() {
@@ -3383,57 +3353,124 @@ function saveSheetsSettings() {
 
 function testSheetsConnection() {
     if (!sheetsScriptUrl) return showToast('⚠️ احفظ الرابط أولاً');
-    var testUrl = sheetsScriptUrl + '?sheet=Reports&t=test&s=TestUser&st=admin&sec=test&c=test&rid=12345&stat=pending';
-    var img = new Image();
-    img.onload = function() {
+    fetch(sheetsScriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type': 'text/plain'},
+        body: JSON.stringify({sheet: 'Test', action: 'test', timestamp: new Date().toISOString()})
+    }).then(function() {
         showToast('✅ الاتصال ناجح!');
+    }).catch(function() {
+        showToast('❌ فشل الاتصال');
+    });
+}
+
+function translateToArabic(data) {
+    var keyMap = {
+        'action': 'الإجراء',
+        'type': 'النوع',
+        'name': 'الاسم',
+        'password': 'كلمة المرور',
+        'whatsapp': 'الواتساب',
+        'createdAt': 'تاريخ الإنشاء',
+        'createdBy': 'تم الإنشاء بواسطة',
+        'status': 'الحالة',
+        'solvedAt': 'تاريخ الحل',
+        'doneAt': 'تاريخ الإنجاز',
+        'rejectedAt': 'تاريخ الرفض',
+        'archivedAt': 'تاريخ الأرشفة',
+        'sender': 'المرسل',
+        'senderType': 'نوع المرسل',
+        'section': 'القسم',
+        'item': 'البلاغ',
+        'content': 'المحتوى',
+        'reportedId': 'ID المتهم',
+        'timestamp': 'التاريخ',
+        'oldId': 'ID القديم',
+        'newId': 'ID المطلوب',
+        'note': 'الملاحظات',
+        'shipmentOwnerId': 'ID صاحب الشحنة',
+        'shipmentMonth': 'الشهر',
+        'shipmentAmount': 'قيمة الشحنة',
+        'currentId': 'ID الحالي',
+        'withdrawnId': 'ID المسحوب',
+        'ids': 'الـ IDs',
+        'types': 'الأنواع',
+        'adminName': 'اسم الأدمن',
+        'agentName': 'اسم الوكيل',
+        'sectionName': 'اسم القسم'
     };
-    img.onerror = function() {
-        showToast('✅ الاتصال ناجح!');
+    var valueMap = {
+        'create': 'إنشاء',
+        'update': 'تحديث',
+        'admin': 'أدمن',
+        'agent': 'وكيل',
+        'report': 'بلاغ',
+        'idChange': 'تغيير ID',
+        'idReturn': 'إرجاع ID',
+        'welcome': 'ترحيب',
+        'pending': 'قيد المراجعة',
+        'solved': 'تم الحل',
+        'done': 'تم العمل',
+        'rejected': 'مرفوض'
     };
-    img.src = testUrl;
+    // Internal IDs to skip completely
+    var skipKeys = ['id', 'adminId', 'agentId', 'sectionId'];
+    var result = {};
+    for (var key in data) {
+        if (!data.hasOwnProperty(key)) continue;
+        // Skip internal Firebase IDs
+        if (skipKeys.indexOf(key) !== -1) continue;
+        var val = data[key];
+
+        // Flatten 'original' object into separate columns
+        if (key === 'original' && typeof val === 'object' && val !== null && !Array.isArray(val)) {
+            for (var subKey in val) {
+                if (!val.hasOwnProperty(subKey)) continue;
+                if (skipKeys.indexOf(subKey) !== -1) continue;
+                var subVal = val[subKey];
+                var newSubKey = keyMap[subKey] || subKey;
+                if (subVal !== null && subVal !== undefined) {
+                    var strSubVal = String(subVal);
+                    result[newSubKey] = valueMap[strSubVal] || strSubVal;
+                }
+            }
+            continue;
+        }
+
+        var newKey = keyMap[key] || key;
+        if (val !== null && val !== undefined) {
+            var strVal = String(val);
+            result[newKey] = valueMap[strVal] || strVal;
+        } else {
+            result[newKey] = '';
+        }
+    }
+    return result;
 }
 
 function sendToGoogleSheets(data, sheetName) {
     if (!sheetsScriptUrl) {
-        console.log('Google Sheets URL not set, skipping...');
+        console.log('Google Sheets URL not set');
         return Promise.resolve({success: false, reason: 'no_url'});
     }
+    var arabicData = translateToArabic(data);
+    var payload = JSON.stringify(Object.assign({}, arabicData, {sheet: sheetName}));
+    console.log('Sending to Sheets:', sheetName);
 
-    // Build GET URL with all parameters
-    var url = sheetsScriptUrl + '?sheet=' + encodeURIComponent(sheetName);
-    for (var key in data) {
-        if (data.hasOwnProperty(key) && data[key] !== undefined && data[key] !== null) {
-            var val = typeof data[key] === 'object' ? JSON.stringify(data[key]) : String(data[key]);
-            url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(val);
-        }
-    }
-
-    console.log('Sending to Excel:', url.substring(0, 200));
-
-    // Method 1: Image beacon (works from file:// and any domain, no CORS)
-    var img = new Image();
-    img.onload = function() {
-        console.log('✅ Excel success via image');
-    };
-    img.onerror = function() {
-        console.log('✅ Excel sent via image (onerror)');
-    };
-    img.src = url;
-
-    // Method 2: fetch (works if site is hosted on real domain like Vercel)
-    fetch(url)
-        .then(r => r.text())
-        .then(t => {
-            console.log('Excel response:', t);
-            showToast('✅ تم التوثيق في Excel');
-        })
-        .catch(err => {
-            console.log('Fetch optional:', err);
-            showToast('✅ تم التوثيق في Excel');
-        });
-
-    return Promise.resolve({success: true});
+    return fetch(sheetsScriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type': 'text/plain'},
+        body: payload
+    }).then(function() {
+        console.log('✅ Sent to Sheets:', sheetName);
+        showToast('✅ تم الحفظ في Excel');
+        return {success: true};
+    }).catch(function(err) {
+        console.log('❌ Sheets error:', err);
+        return {success: false, error: err};
+    });
 }
 
 // ========== ID RETURN SYSTEM ==========
