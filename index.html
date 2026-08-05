@@ -3115,6 +3115,7 @@ function loadAgents() {
                             <a href="https://wa.me/${agent.whatsapp || ''}" target="_blank" class="text-xs text-green-400 hover:text-green-300 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded-lg border border-green-500/20">
                                 <i class="fab fa-whatsapp"></i> ${agent.whatsapp || '—'}
                             </a>
+                            ${agent.whatsapp ? `<button onclick="copyText('${agent.whatsapp.replace(/'/g, "\'")}')" class="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg bg-slate-700/30" title="نسخ الرقم"><i class="fas fa-copy"></i></button>` : ''}
                             <div class="flex items-center gap-1 bg-slate-700/30 px-2 py-1 rounded-lg">
                                 <span class="text-xs text-slate-400 font-mono password-hidden" id="agent-pass-${key}">${agent.password}</span>
                                 <button onclick="toggleAgentPassword('${key}')" class="text-slate-400 hover:text-white text-xs px-1"><i class="fas fa-eye" id="agent-eye-${key}"></i></button>
@@ -4158,6 +4159,16 @@ function translateToArabic(data) {
         var newKey = keyMap[key] || key;
         if (val !== null && val !== undefined) {
             var strVal = String(val);
+            // Force whatsapp numbers as plain text with + prefix for Sheets
+            if (key === 'whatsapp') {
+                strVal = strVal.trim();
+                if (strVal && !strVal.startsWith('+') && !strVal.startsWith("'")) {
+                    strVal = '+' + strVal;
+                }
+                if (strVal && !strVal.startsWith("'")) {
+                    strVal = "'" + strVal;
+                }
+            }
             result[newKey] = valueMap[strVal] || strVal;
         } else {
             result[newKey] = '';
