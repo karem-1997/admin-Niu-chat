@@ -2931,6 +2931,35 @@ const db = firebase.database();
 
 let currentUser = null, userType = null, selectedSectionId = null, selectedSectionData = null, loginType = 'agent';
 
+// ========== SESSION PERSISTENCE ==========
+function saveSession(user) {
+    try { localStorage.setItem('niuChatSession', JSON.stringify(user)); } catch(e) {}
+}
+
+function loadSession() {
+    try {
+        const session = JSON.parse(localStorage.getItem('niuChatSession') || 'null');
+        if (session && session.type) {
+            currentUser = session;
+            userType = session.type;
+            if (session.type === 'manager') {
+                showManagerDashboard();
+            } else if (session.type === 'admin') {
+                showAdminDashboard();
+            } else if (session.type === 'agent') {
+                showAgentDashboard();
+            }
+            return true;
+        }
+    } catch(e) {}
+    return false;
+}
+
+function clearSession() {
+    try { localStorage.removeItem('niuChatSession'); } catch(e) {}
+}
+
+
 function switchLoginView(type) {
     loginType = type;
     const nameGroup = document.getElementById('nameGroup');
@@ -3007,6 +3036,7 @@ function handleLogin(e) {
                 currentUser = { type: 'manager', name: 'المدير' };
                 userType = 'manager';
                 if (rememberMe) saveRememberMe('manager', '', password);
+                saveSession(currentUser);
                 showManagerDashboard();
             } else showToast('كلمة المرور غير صحيحة');
         });
@@ -3015,7 +3045,7 @@ function handleLogin(e) {
             const admins = snap.val() || {};
             let found = null, foundKey = null;
             Object.entries(admins).forEach(([key, val]) => { if (val.name === name && val.password === password) { found = val; foundKey = key; } });
-            if (found) { currentUser = { type: 'admin', name: found.name, id: foundKey }; userType = 'admin'; if (rememberMe) saveRememberMe('admin', name, password); showAdminDashboard(); }
+            if (found) { currentUser = { type: 'admin', name: found.name, id: foundKey }; userType = 'admin'; if (rememberMe) saveRememberMe('admin', name, password); saveSession(currentUser); showAdminDashboard(); }
             else showToast('اسم الأدمن أو كلمة المرور غير صحيحة');
         });
     } else if (loginType === 'agent') {
@@ -3023,7 +3053,7 @@ function handleLogin(e) {
             const agents = snap.val() || {};
             let found = null, foundKey = null;
             Object.entries(agents).forEach(([key, val]) => { if (val.name === name && val.password === password) { found = val; foundKey = key; } });
-            if (found) { currentUser = { type: 'agent', name: found.name, id: foundKey }; userType = 'agent'; if (rememberMe) saveRememberMe('agent', name, password); showAgentDashboard(); }
+            if (found) { currentUser = { type: 'agent', name: found.name, id: foundKey }; userType = 'agent'; if (rememberMe) saveRememberMe('agent', name, password); saveSession(currentUser); showAgentDashboard(); }
             else showToast('اسم الوكيل أو كلمة المرور غير صحيحة');
         });
     }
@@ -3054,6 +3084,7 @@ function clearRememberMe() {
 
 function logout() {
     currentUser = null; userType = null;
+    clearSession();
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('managerDashboard').classList.add('hidden');
     document.getElementById('adminDashboard').classList.add('hidden');
@@ -4642,7 +4673,9 @@ async function exportToExcel() {
 
 // Load remembered credentials on page load
 document.addEventListener('DOMContentLoaded', function() {
-    loadRememberMe();
+    if (!loadSession()) {
+        loadRememberMe();
+    }
 });
 
 </script>
