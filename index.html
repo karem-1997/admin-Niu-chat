@@ -2328,6 +2328,10 @@ async function exportToExcel() {
                 <label class="block text-sm font-medium text-slate-400 mb-2">كلمة المرور</label>
                 <input type="password" id="loginPassword" class="w-full modern-input rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all" placeholder="أدخل كلمة المرور">
             </div>
+            <div class="mb-6 flex items-center gap-2">
+                <input type="checkbox" id="rememberMe" class="w-5 h-5 rounded border-slate-600 text-red-500 focus:ring-red-500/20 cursor-pointer">
+                <label for="rememberMe" class="text-sm text-slate-400 cursor-pointer select-none">تذكرني</label>
+            </div>
             <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-white shadow-lg shadow-red-500/25" id="loginSubmitBtn">
                 <i class="fas fa-sign-in-alt ml-2"></i>تسجيل الدخول
             </button>
@@ -2992,6 +2996,7 @@ function handleLogin(e) {
     e.preventDefault();
     const name = document.getElementById('loginName').value.trim();
     const password = document.getElementById('loginPassword').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
     if (!password) return showToast('يرجى إدخال كلمة المرور');
     if (loginType !== 'manager' && !name) return showToast('يرجى إدخال الاسم');
     if (loginType === 'manager') {
@@ -3001,6 +3006,7 @@ function handleLogin(e) {
             if (password === storedPass) {
                 currentUser = { type: 'manager', name: 'المدير' };
                 userType = 'manager';
+                if (rememberMe) saveRememberMe('manager', '', password);
                 showManagerDashboard();
             } else showToast('كلمة المرور غير صحيحة');
         });
@@ -3009,7 +3015,7 @@ function handleLogin(e) {
             const admins = snap.val() || {};
             let found = null, foundKey = null;
             Object.entries(admins).forEach(([key, val]) => { if (val.name === name && val.password === password) { found = val; foundKey = key; } });
-            if (found) { currentUser = { type: 'admin', name: found.name, id: foundKey }; userType = 'admin'; showAdminDashboard(); }
+            if (found) { currentUser = { type: 'admin', name: found.name, id: foundKey }; userType = 'admin'; if (rememberMe) saveRememberMe('admin', name, password); showAdminDashboard(); }
             else showToast('اسم الأدمن أو كلمة المرور غير صحيحة');
         });
     } else if (loginType === 'agent') {
@@ -3017,10 +3023,33 @@ function handleLogin(e) {
             const agents = snap.val() || {};
             let found = null, foundKey = null;
             Object.entries(agents).forEach(([key, val]) => { if (val.name === name && val.password === password) { found = val; foundKey = key; } });
-            if (found) { currentUser = { type: 'agent', name: found.name, id: foundKey }; userType = 'agent'; showAgentDashboard(); }
+            if (found) { currentUser = { type: 'agent', name: found.name, id: foundKey }; userType = 'agent'; if (rememberMe) saveRememberMe('agent', name, password); showAgentDashboard(); }
             else showToast('اسم الوكيل أو كلمة المرور غير صحيحة');
         });
     }
+}
+
+function saveRememberMe(type, name, password) {
+    try {
+        localStorage.setItem('niuChatRemember', JSON.stringify({ type, name, password }));
+    } catch(e) {}
+}
+
+function loadRememberMe() {
+    try {
+        const data = JSON.parse(localStorage.getItem('niuChatRemember') || '{}');
+        if (data && data.type) {
+            switchLoginView(data.type);
+            if (data.name) document.getElementById('loginName').value = data.name;
+            if (data.password) document.getElementById('loginPassword').value = data.password;
+            const cb = document.getElementById('rememberMe');
+            if (cb) cb.checked = true;
+        }
+    } catch(e) {}
+}
+
+function clearRememberMe() {
+    try { localStorage.removeItem('niuChatRemember'); } catch(e) {}
 }
 
 function logout() {
@@ -3031,6 +3060,7 @@ function logout() {
     document.getElementById('agentDashboard').classList.add('hidden');
     document.getElementById('loginForm').reset();
     switchLoginView('admin');
+    loadRememberMe();
 }
 
 function showManagerDashboard() {
@@ -4609,6 +4639,11 @@ async function exportToExcel() {
         showToast('❌ خطأ في التصدير: ' + error.message);
     }
 }
+
+// Load remembered credentials on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadRememberMe();
+});
 
 </script>
 </body>
